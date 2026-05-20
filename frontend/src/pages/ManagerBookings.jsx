@@ -99,7 +99,7 @@ const ManagerBookings = () => {
                   <td>{new Date(booking.checkInDate).toLocaleDateString()}</td>
                   <td>{new Date(booking.checkOutDate).toLocaleDateString()}</td>
                   <td>{booking.roomId?.roomType || 'N/A'}</td>
-                  <td className="fw-bold">${booking.totalAmount}</td>
+                  <td className="fw-bold">₹{booking.totalAmount}</td>
                   <td>
                     <span className={`badge bg-${getStatusBadge(booking.bookingStatus)}`}>
                       {booking.bookingStatus}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const HotelFilters = ({ onFilterApply }) => {
+const HotelFilters = ({ onFilterApply, onClose }) => {
   const [minRating, setMinRating] = useState('');
   const [amenities, setAmenities] = useState([]);
 
@@ -15,10 +15,11 @@ const HotelFilters = ({ onFilterApply }) => {
 
   const applyFilters = () => {
     onFilterApply({ minRating, amenities: amenities.join(',') });
+    if (onClose) onClose();
   };
 
   return (
-    <div className="card border-0 shadow-sm p-3 mb-4">
+    <div className="card border-0 shadow-sm p-3 mb-4 w-100">
       <h6 className="fw-bold mb-3">Filter By</h6>
       
       <div className="mb-3">
@@ -50,7 +51,10 @@ const HotelFilters = ({ onFilterApply }) => {
         ))}
       </div>
 
-      <button className="btn btn-outline-primary w-100" onClick={applyFilters}>Apply Filters</button>
+      <div className="d-flex gap-2">
+        <button className="btn btn-outline-primary flex-grow-1" onClick={applyFilters}>Apply</button>
+        {onClose && <button className="btn btn-outline-secondary d-lg-none" onClick={onClose}>Close</button>}
+      </div>
     </div>
   );
 };

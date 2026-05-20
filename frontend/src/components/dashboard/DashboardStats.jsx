@@ -2,7 +2,7 @@ import React from 'react';
 
 const DashboardStats = ({ stats }) => {
   const cards = [
-    { title: 'Total Revenue', value: `$${stats?.totalRevenue || 0}`, icon: 'bi-currency-dollar', color: 'primary' },
+    { title: 'Total Revenue', value: `₹${stats?.totalRevenue || 0}`, icon: 'bi-currency-rupee', color: 'primary' },
     { title: 'Total Bookings', value: stats?.bookingsCount || 0, icon: 'bi-journal-check', color: 'success' },
     { title: 'Total Users', value: stats?.totalUsers || 0, icon: 'bi-people', color: 'info' },
     { title: 'Total Hotels', value: stats?.totalHotels || 0, icon: 'bi-building', color: 'warning' },

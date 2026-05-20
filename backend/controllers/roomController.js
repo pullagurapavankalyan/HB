@@ -1,3 +1,4 @@
+const fs = require('fs');
 const Room = require('../models/Room');
 const Hotel = require('../models/Hotel');
 const asyncHandler = require('../middleware/asyncHandler');
@@ -8,26 +9,24 @@ const { successResponse, errorResponse } = require('../utils/apiResponse');
 // @access  Public
 const getHotelRooms = asyncHandler(async (req, res) => {
   const { checkIn, checkOut } = req.query;
-  let query = { hotelId: req.params.hotelId };
+  const rooms = await Room.find({ hotelId: req.params.hotelId });
+  let availableRooms = rooms;
 
-  // If dates are provided, filter out rooms booked in that range
   if (checkIn && checkOut) {
     const inDate = new Date(checkIn);
     const outDate = new Date(checkOut);
 
-    query.bookedDates = {
-      $not: {
-        $elemMatch: {
-          $or: [
-            { checkIn: { $lt: outDate }, checkOut: { $gt: inDate } }
-          ]
-        }
-      }
-    };
+    availableRooms = rooms.filter((room) => {
+      const overlaps = (room.bookedDates || []).filter((booking) => {
+        const existingCheckIn = new Date(booking.checkIn);
+        const existingCheckOut = new Date(booking.checkOut);
+        return inDate < existingCheckOut && outDate > existingCheckIn;
+      });
+      return overlaps.length < (room.quantity || 1);
+    });
   }
 
-  const rooms = await Room.find(query);
-  successResponse(res, 200, 'Rooms retrieved', rooms);
+  successResponse(res, 200, 'Rooms retrieved', availableRooms);
 });
 
 // @desc    Create a room
@@ -39,6 +38,11 @@ const createRoom = asyncHandler(async (req, res) => {
 
   if (hotel.managerId.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
     return errorResponse(res, 403, 'Not authorized to add rooms to this hotel');
+  }
+
+  // If files were uploaded (images), map them to accessible URLs
+  if (req.files && req.files.length > 0) {
+    req.body.images = req.files.map((file) => `/uploads/${file.filename}`);
   }
 
   const room = await Room.create(req.body);
@@ -58,7 +62,13 @@ const updateRoom = asyncHandler(async (req, res) => {
     return errorResponse(res, 403, 'Not authorized to update this room');
   }
 
-  const updatedRoom = await Room.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  // If files were uploaded, map them to URLs and include them in update
+  const updateData = { ...req.body };
+  if (req.files && req.files.length > 0) {
+    updateData.images = req.files.map((file) => `/uploads/${file.filename}`);
+  }
+
+  const updatedRoom = await Room.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
   successResponse(res, 200, 'Room updated', updatedRoom);
 });
 

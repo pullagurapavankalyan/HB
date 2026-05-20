@@ -71,4 +71,48 @@ const deleteReview = asyncHandler(async (req, res) => {
   successResponse(res, 200, 'Review deleted');
 });
 
-module.exports = { addReview, getHotelReviews, deleteReview };
+// @desc    Get reviews for manager's hotels
+// @route   GET /api/reviews/manager
+// @access  Private/Manager
+const getManagerReviews = asyncHandler(async (req, res) => {
+  const hotels = await Hotel.find({ managerId: req.user._id }).select('_id hotelName');
+  const hotelIds = hotels.map(h => h._id);
+
+  if (hotelIds.length === 0) return successResponse(res, 200, 'Manager reviews retrieved', []);
+
+  const reviews = await Review.find({ hotelId: { $in: hotelIds } })
+    .populate('userId', 'name profileImage')
+    .populate('hotelId', 'hotelName')
+    .sort({ createdAt: -1 });
+
+  successResponse(res, 200, 'Manager reviews retrieved', reviews);
+});
+
+// @desc    Reply to a review (manager responding)
+// @route   PUT /api/reviews/:id/reply
+// @access  Private/Manager
+const replyToReview = asyncHandler(async (req, res) => {
+  const review = await Review.findById(req.params.id).populate('hotelId');
+  if (!review) return errorResponse(res, 404, 'Review not found');
+
+  if (review.hotelId.managerId.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
+    return errorResponse(res, 403, 'Not authorized to reply to this review');
+  }
+
+  const message = req.body.message || req.body.reply;
+  if (!message || message.trim().length === 0) {
+    return errorResponse(res, 400, 'Reply message is required');
+  }
+
+  review.reply = {
+    message: message.trim(),
+    repliedBy: req.user._id,
+    repliedAt: new Date()
+  };
+
+  await review.save();
+  const populated = await Review.findById(review._id).populate('userId', 'name profileImage').populate('hotelId', 'hotelName');
+  successResponse(res, 200, 'Reply saved', populated);
+});
+
+module.exports = { addReview, getHotelReviews, deleteReview, getManagerReviews, replyToReview };

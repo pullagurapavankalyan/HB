@@ -43,7 +43,7 @@ const sendBookingConfirmationEmail = async (user, booking, hotel) => {
     <ul>
       <li><strong>Check-in:</strong> ${new Date(booking.checkInDate).toLocaleDateString()}</li>
       <li><strong>Check-out:</strong> ${new Date(booking.checkOutDate).toLocaleDateString()}</li>
-      <li><strong>Amount Paid:</strong> $${booking.totalAmount}</li>
+      <li><strong>Amount Paid:</strong> ₹${booking.totalAmount}</li>
     </ul>
     <p>We look forward to hosting you!</p>
   `;

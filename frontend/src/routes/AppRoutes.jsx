@@ -18,10 +18,10 @@ import BookingSuccess from '../pages/BookingSuccess';
 import BookingHistory from '../pages/BookingHistory';
 import Wishlist from '../pages/Wishlist';
 import Notifications from '../pages/Notifications';
-import Loyalty from '../pages/Loyalty';
 import ManagerRooms from '../pages/ManagerRooms';
 import ManagerBookings from '../pages/ManagerBookings';
 import ManagerHotels from '../pages/ManagerHotels';
+import ManagerReviews from '../pages/ManagerReviews';
 import UserProfile from '../pages/UserProfile';
 import AdminDashboard from '../pages/AdminDashboard';
 import ManagerDashboard from '../pages/ManagerDashboard';
@@ -63,7 +63,7 @@ const AppRoutes = () => {
           <Route path="/my-bookings" element={<RoleProtectedRoute allowedRoles={['User']}><BookingHistory /></RoleProtectedRoute>} />
           <Route path="/wishlist" element={<RoleProtectedRoute allowedRoles={['User']}><Wishlist /></RoleProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-          <Route path="/loyalty" element={<RoleProtectedRoute allowedRoles={['User']}><Loyalty /></RoleProtectedRoute>} />
+          {/* Loyalty page removed; points shown in the navbar instead */}
           <Route path="/book/:hotelId/:roomId" element={<RoleProtectedRoute allowedRoles={['User']}><BookingPage /></RoleProtectedRoute>} />
           <Route path="/payment/:bookingId" element={<RoleProtectedRoute allowedRoles={['User']}><PaymentPage /></RoleProtectedRoute>} />
           <Route path="/booking-success/:bookingId" element={<RoleProtectedRoute allowedRoles={['User']}><BookingSuccess /></RoleProtectedRoute>} />
@@ -76,6 +76,7 @@ const AppRoutes = () => {
                   <Route path="dashboard" element={<ManagerDashboard />} />
                   <Route path="my-hotels" element={<ManagerHotels />} />
                   <Route path="rooms" element={<ManagerRooms />} />
+                  <Route path="reviews" element={<ManagerReviews />} />
                   <Route path="bookings" element={<ManagerBookings />} />
                 </Routes>
               </ManagerLayout>

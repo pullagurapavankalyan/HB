@@ -20,19 +20,41 @@ const getLoyaltyAccount = asyncHandler(async (req, res) => {
 // @access  Private
 const redeemPoints = asyncHandler(async (req, res) => {
   const { pointsToRedeem, bookingId } = req.body;
+  const pointsValue = Number(pointsToRedeem);
   
+  if (!Number.isInteger(pointsValue) || pointsValue <= 0 || pointsValue % 10 !== 0) {
+    return errorResponse(res, 400, 'Points must be redeemed in multiples of 10');
+  }
+
   const account = await LoyaltyAccount.findOne({ userId: req.user._id });
   if (!account || account.points < pointsToRedeem) {
     return errorResponse(res, 400, 'Insufficient points');
   }
 
-  account.points -= pointsToRedeem;
+  account.points -= pointsValue;
   account.history.push({
     transactionType: 'Redeemed',
-    pointsAmount: pointsToRedeem,
+    pointsAmount: pointsValue,
     bookingId,
     description: 'Redeemed for booking'
   });
+
+  // Record redemption count for booking reference
+  if (bookingId) {
+    const Booking = require('../models/Booking');
+    const booking = await Booking.findById(bookingId);
+      if (booking) {
+      if (booking.paymentStatus === 'paid') {
+        return errorResponse(res, 400, 'Cannot redeem points after payment has been completed');
+      }
+
+      const discountPercent = (pointsValue / 10) * 5;
+      const discountedAmount = Math.round(booking.totalAmount * (1 - discountPercent / 100));
+      booking.totalAmount = Math.max(discountedAmount, 0);
+        booking.loyaltyPointsRedeemed = (booking.loyaltyPointsRedeemed || 0) + pointsValue;
+      await booking.save();
+    }
+  }
 
   await account.save();
   successResponse(res, 200, 'Points redeemed successfully', account);

@@ -9,6 +9,7 @@ const roomSchema = new mongoose.Schema(
       adults: { type: Number, required: true, default: 2 },
       children: { type: Number, required: true, default: 0 },
     },
+    quantity: { type: Number, required: true, default: 1, min: 1 },
     price: { type: Number, required: true },
     discountPrice: { type: Number },
     amenities: [{ type: String }],

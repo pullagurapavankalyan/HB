@@ -27,7 +27,7 @@ const createPaymentIntent = asyncHandler(async (req, res) => {
       id: `pi_test_${Date.now()}`,
       client_secret: `pi_test_${Date.now()}_secret_${Math.random().toString(36).substr(2, 9)}`,
       amount: amountCents,
-      currency: 'usd',
+      currency: 'inr',
       status: 'requires_payment_method'
     };
     console.log('⚠️  Using mock Stripe payment intent (development mode)');
@@ -35,7 +35,7 @@ const createPaymentIntent = asyncHandler(async (req, res) => {
     // Real Stripe payment intent
     paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
-      currency: 'usd',
+      currency: 'inr',
       metadata: { bookingId: booking._id.toString() }
     });
   }

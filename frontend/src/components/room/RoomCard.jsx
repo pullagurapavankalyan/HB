@@ -6,7 +6,7 @@ const RoomCard = ({ room, onBookNow, canBook = true }) => {
   const BACKEND_HOST = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
   
   const getRoomImageUrl = () => {
-    const fallbackPlaceholder = 'https://via.placeholder.com/300x200?text=Room';
+    const fallbackPlaceholder = 'https://placeholder.co/300x200?text=Room';
     const imgItem = room?.images?.[0];
     if (!imgItem) return fallbackPlaceholder;
     return typeof imgItem === 'object' ? imgItem.url : imgItem;
@@ -22,7 +22,7 @@ const RoomCard = ({ room, onBookNow, canBook = true }) => {
                 ? `${BACKEND_HOST}/api/hotels/${room.hotelId}/images/${room.images[0]._id}`
                 : room.images?.[0]?.url?.startsWith('/')
                   ? `${BACKEND_HOST}${room.images[0].url}`
-                  : room.images?.[0]?.url || 'https://via.placeholder.com/300x200?text=Room'
+                  : room.images?.[0]?.url || 'https://placeholder.co/300x200?text=Room'
             }
             className="img-fluid rounded-start h-100" 
             alt={room.roomType || "Hotel Room"} 
@@ -34,10 +34,11 @@ const RoomCard = ({ room, onBookNow, canBook = true }) => {
             <div className="d-flex justify-content-between">
               <h5 className="card-title fw-bold text-primary">{room.roomType || 'Standard Room'}</h5>
               <h5 className="fw-bold text-success">
-                ${room.price}
+                ₹{room.price}
                 <span className="text-muted small fw-normal"> / night</span>
               </h5>
             </div>
+            <p className="text-muted small mb-2">Available units: {room.quantity || 1}</p>
             
             {/* Structural Changes here to safely break open the capacity parameters */}
             <div className="mb-3 mt-2 d-flex flex-wrap gap-2">

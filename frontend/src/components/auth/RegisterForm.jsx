@@ -121,6 +121,7 @@ const RegisterForm = () => {
           <label htmlFor="password" className="form-label fw-semibold">Password</label>
           <input
             type="password"
+            autoComplete="new-password"
             id="password"
             className={`form-control ${errors.password ? 'is-invalid' : ''}`}
             value={formData.password}

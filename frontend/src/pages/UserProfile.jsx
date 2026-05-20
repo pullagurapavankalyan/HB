@@ -10,7 +10,7 @@ const UserProfile = () => {
         <div className="col-md-4 mb-4">
           <div className="card shadow-sm border-0 text-center p-4 h-100">
             <img 
-              src={user?.profileImage || 'https://via.placeholder.com/150'} 
+              src={user?.profileImage || 'https://placeholder.co/150'} 
               alt="Profile" 
               className="rounded-circle mx-auto mb-3" 
               style={{ width: '150px', height: '150px', objectFit: 'cover' }}

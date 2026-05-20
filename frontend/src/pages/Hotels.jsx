@@ -38,27 +38,35 @@ const Hotels = () => {
     setPage(1); // Reset to page 1 on new filter
   };
 
+  const [showFilters, setShowFilters] = useState(false);
+
   return (
     <div className="container py-5">
       <div className="row mb-4 align-items-center">
-        <div className="col-md-6">
-          <h2 className="fw-bold mb-0">
+        <div className="col-6 col-md-6">
+          <h2 className="fw-bold mb-0 fs-5 fs-md-4">
             {keywordParams ? `Search Results for "${keywordParams}"` : 'Explore Hotels'}
           </h2>
         </div>
-        <div className="col-md-6 d-flex justify-content-md-end mt-3 mt-md-0">
+        <div className="col-6 col-md-6 d-flex justify-content-end justify-content-md-end gap-2 mt-2 mt-md-0">
+          <button 
+            className="btn btn-sm btn-outline-secondary d-lg-none" 
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <i className="bi bi-funnel"></i> Filter
+          </button>
           <SortDropdown sortBy={sort} onSortChange={setSort} />
         </div>
       </div>
 
       <div className="row">
-        {/* Sidebar Filters */}
-        <div className="col-lg-3 mb-4">
-          <HotelFilters onFilterApply={handleFilterApply} />
+        {/* Sidebar Filters - Hidden on mobile, visible on desktop */}
+        <div className={`col-12 col-lg-3 mb-4 ${showFilters ? 'd-block' : 'd-none'} d-lg-block`}>
+          <HotelFilters onFilterApply={handleFilterApply} onClose={() => setShowFilters(false)} />
         </div>
 
         {/* Main Content */}
-        <div className="col-lg-9">
+        <div className="col-12 col-lg-9">
           {loading ? (
             <Loader />
           ) : error ? (

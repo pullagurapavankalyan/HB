@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Card, Form, Button, Row, Col, Table, Modal, Alert } from 'react-bootstrap';
-import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
+import api from '../api/axios';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 const ManageHotel = () => {
-  const { user } = useContext(AuthContext);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   const [hotel, setHotel] = useState(null);
@@ -20,7 +20,7 @@ const ManageHotel = () => {
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    if (!user || user.role !== 'Manager') {
+    if (!isAuthenticated || user.role !== 'Manager') {
       navigate('/login');
       return;
     }
@@ -28,7 +28,7 @@ const ManageHotel = () => {
     const fetchMyHotel = async () => {
       try {
         // Fetch all hotels and find the one managed by this user
-        const { data } = await axios.get('http://localhost:5000/api/hotels');
+        const { data } = await api.get('/hotels');
         const myHotel = data.find(h => h.manager === user._id);
         
         if (myHotel) {
@@ -38,7 +38,7 @@ const ManageHotel = () => {
           setDescription(myHotel.description);
 
           // Fetch rooms for this hotel
-          const roomsRes = await axios.get(`http://localhost:5000/api/rooms/hotel/${myHotel._id}`);
+          const roomsRes = await api.get(`/rooms/hotel/${myHotel._id}`);
           setRooms(roomsRes.data);
         }
       } catch (error) {
@@ -46,25 +46,25 @@ const ManageHotel = () => {
       }
     };
     fetchMyHotel();
-  }, [user, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleUpdateHotel = async (e) => {
     e.preventDefault();
     try {
-      const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      
       if (hotel) {
-        // Update existing hotel
-        const { data } = await axios.put(`http://localhost:5000/api/hotels/${hotel._id}`, {
-          name: hotelName, location, description
-        }, config);
+        const { data } = await api.put(`/hotels/${hotel._id}`, {
+          name: hotelName,
+          location,
+          description
+        });
         setHotel(data);
         setMessage({ type: 'success', text: 'Hotel updated successfully!' });
       } else {
-        // Create new hotel
-        const { data } = await axios.post('http://localhost:5000/api/hotels', {
-          name: hotelName, location, description
-        }, config);
+        const { data } = await api.post('/hotels', {
+          name: hotelName,
+          location,
+          description
+        });
         setHotel(data);
         setMessage({ type: 'success', text: 'Hotel created successfully!' });
       }
@@ -78,10 +78,9 @@ const ManageHotel = () => {
     if (!hotel) return alert('Please save your hotel info first!');
 
     try {
-      const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post('http://localhost:5000/api/rooms', {
+      const { data } = await api.post('/rooms', {
         ...newRoom, hotel: hotel._id
-      }, config);
+      });
       
       setRooms([...rooms, data]);
       setShowRoomModal(false);
@@ -92,8 +91,7 @@ const ManageHotel = () => {
 
   const handleDeleteRoom = async (id) => {
     try {
-      const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.delete(`http://localhost:5000/api/rooms/${id}`, config);
+      await api.delete(`/rooms/${id}`);
       setRooms(rooms.filter(r => r._id !== id));
     } catch (error) {
       alert('Error deleting room');
@@ -154,7 +152,7 @@ const ManageHotel = () => {
                   {rooms.map(room => (
                     <tr key={room._id}>
                       <td>{room.type}</td>
-                      <td>${room.price}</td>
+                        <td>₹{room.price}</td>
                       <td>{room.quantity}</td>
                       <td>
                         <Button variant="sm" className="btn-outline-danger" onClick={() => handleDeleteRoom(room._id)}>Delete</Button>
@@ -184,7 +182,7 @@ const ManageHotel = () => {
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Price per Night ($)</Form.Label>
+              <Form.Label>Price per Night (₹)</Form.Label>
               <Form.Control type="number" required min="1" value={newRoom.price} onChange={(e) => setNewRoom({...newRoom, price: e.target.value})} />
             </Form.Group>
             <Form.Group className="mb-3">

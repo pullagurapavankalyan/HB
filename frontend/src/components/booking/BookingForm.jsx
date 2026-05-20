@@ -78,7 +78,7 @@ const BookingForm = ({ room, onSubmit, loading }) => {
         
         <div className="d-flex justify-content-between align-items-center mb-3">
           <span className="text-muted">Total Amount</span>
-          <h4 className="fw-bold text-success m-0">${total}</h4>
+          <h4 className="fw-bold text-success m-0">₹{total}</h4>
         </div>
 
         <CustomButton type="submit" loading={loading} className="w-100 btn-lg" disabled={total <= 0}>

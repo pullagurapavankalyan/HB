@@ -46,8 +46,8 @@ const Home = () => {
       {/* Promotional Section */}
       <section className="bg-light py-5">
         <div className="container text-center">
-          <h3 className="fw-bold mb-3">Earn Rewards on Every Stay</h3>
-          <p className="text-muted mb-4">Join our loyalty program and get up to 10% back in points.</p>
+          <h3 className="fw-bold mb-3">Earn Loyalty Points on Every Stay</h3>
+          <p className="text-muted mb-4">Collect points with every booking and unlock booking discounts.</p>
           <a href="/register" className="btn btn-primary btn-lg fw-bold">Sign Up Now</a>
         </div>
       </section>

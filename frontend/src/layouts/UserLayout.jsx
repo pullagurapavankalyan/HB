@@ -16,7 +16,6 @@ const UserLayout = () => {
                 <Nav.Link as={Link} to="/dashboard" className={`mb-2 rounded ${isActive('/dashboard')}`}>Profile</Nav.Link>
                 <Nav.Link as={Link} to="/dashboard/bookings" className={`mb-2 rounded ${isActive('/dashboard/bookings')}`}>My Bookings</Nav.Link>
                 <Nav.Link as={Link} to="/dashboard/wishlist" className={`mb-2 rounded ${isActive('/dashboard/wishlist')}`}>Wishlist</Nav.Link>
-                <Nav.Link as={Link} to="/dashboard/loyalty" className={`mb-2 rounded ${isActive('/dashboard/loyalty')}`}>Loyalty Points</Nav.Link>
                 <Nav.Link as={Link} to="/dashboard/support" className={`mb-2 rounded ${isActive('/dashboard/support')}`}>Support Tickets</Nav.Link>
               </Nav>
             </div>

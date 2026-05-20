@@ -15,8 +15,8 @@ const HotelCard = ({ hotel }) => {
     : typeof hotel.images?.[0] === 'object'
       ? hotel.images[0]?.url?.startsWith('/')
         ? `${BACKEND_HOST}${hotel.images[0].url}`
-        : hotel.images[0]?.url || 'https://via.placeholder.com/400x250?text=Hotel'
-      : hotel.images?.[0] || 'https://via.placeholder.com/400x250?text=Hotel';
+        : hotel.images[0]?.url || 'https://placeholder.co/400x250?text=Hotel'
+      : hotel.images?.[0] || 'https://placeholder.co/400x250?text=Hotel';
 
   const isWishlisted = items.some(item => item._id === hotel._id);
 

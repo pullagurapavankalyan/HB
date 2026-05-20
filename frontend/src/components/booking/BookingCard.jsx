@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const BookingCard = ({ booking, onCancel }) => {
+const BookingCard = ({ booking, onCancel, isCancelling }) => {
   const getStatusBadge = (status) => {
     const badges = {
       pending: 'bg-warning text-dark',
@@ -55,7 +55,7 @@ const BookingCard = ({ booking, onCancel }) => {
           </div>
           <div className="col-md-4 d-flex flex-column justify-content-center align-items-end border-start mt-3 mt-md-0">
             <p className="text-muted mb-1">Total Amount</p>
-            <h2 className="fw-bold text-success">${booking.totalAmount}</h2>
+            <h2 className="fw-bold text-success">₹{booking.totalAmount}</h2>
             <p className="small text-muted mb-3">Payment: <span className="fw-semibold">{booking.paymentStatus.toUpperCase()}</span></p>
             
             {booking.bookingStatus === 'pending' && booking.paymentStatus === 'pending' && (
@@ -63,8 +63,12 @@ const BookingCard = ({ booking, onCancel }) => {
             )}
             
             {(booking.bookingStatus === 'pending' || booking.bookingStatus === 'confirmed') && (
-              <button className="btn btn-outline-danger w-100" onClick={() => onCancel(booking._id)}>
-                Cancel Booking
+              <button
+                className="btn btn-outline-danger w-100"
+                onClick={() => onCancel(booking._id)}
+                disabled={isCancelling}
+              >
+                {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
               </button>
             )}
           </div>

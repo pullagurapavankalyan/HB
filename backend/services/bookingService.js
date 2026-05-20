@@ -23,8 +23,8 @@ const createSafeBooking = async (userId, hotelId, roomId, inDate, outDate, guest
       throw new Error('Room is already booked for the selected dates');
     }
 
-    // Points calculation
-    const pointsEarned = Math.floor(totalAmount * 0.1); // 10% back in points
+    // Points calculation: 1 point for every 100 rupees spent
+    const pointsEarned = Math.floor(totalAmount / 100);
 
     const booking = await Booking.create([{
       userId,

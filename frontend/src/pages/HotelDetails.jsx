@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchHotelDetails, clearHotelDetails } from '../store/slices/hotelSlice';
+import api from '../api/axios';
 import RoomCard from '../components/room/RoomCard';
 import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
@@ -16,6 +17,11 @@ const HotelDetails = () => {
   // Extracting UI state variables cleanly from the Redux slice
   const { hotelDetails: hotel, detailsLoading: loading, error } = useSelector((state) => state.hotel);
   const { user } = useSelector((state) => state.auth);
+
+  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' });
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState(null);
+  const [reviewSuccess, setReviewSuccess] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -35,7 +41,7 @@ const HotelDetails = () => {
 
   // Safe wrapper fallback function processing multi-type array items from image endpoints
   const getImageUrl = (index) => {
-    const fallbackPlaceholder = "https://via.placeholder.com/600x400?text=No+Image+Available";
+    const fallbackPlaceholder = "https://placeholder.co/600x400?text=No+Image+Available";
     const imgItem = hotel?.images?.[index];
     if (!imgItem) return fallbackPlaceholder;
     
@@ -77,6 +83,47 @@ const HotelDetails = () => {
     );
   }
 
+  const myReview = hotel.reviews?.find((review) => review.userId?._id === user?._id || review.userId === user?._id);
+  const canReview = user?.role === 'User' && !myReview;
+
+  const handleReviewChange = (e) => {
+    const { name, value } = e.target;
+    setReviewForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    setReviewLoading(true);
+    setReviewError(null);
+    setReviewSuccess('');
+
+    if (!reviewForm.comment.trim()) {
+      setReviewError('Please add your review comment.');
+      setReviewLoading(false);
+      return;
+    }
+    if (Number(reviewForm.rating) < 1 || Number(reviewForm.rating) > 5) {
+      setReviewError('Please select a rating between 1 and 5.');
+      setReviewLoading(false);
+      return;
+    }
+
+    try {
+      await api.post('/reviews', {
+        hotelId: id,
+        rating: Number(reviewForm.rating),
+        comment: reviewForm.comment.trim()
+      });
+      setReviewSuccess('Thank you for your review.');
+      setReviewForm({ rating: 0, comment: '' });
+      dispatch(fetchHotelDetails(id));
+    } catch (err) {
+      console.error('Review submission failed', err);
+      setReviewError(err.response?.data?.message || 'Failed to submit review.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
   return (
     <div className="container py-5">
       {/* Header Info Section */}
@@ -90,28 +137,31 @@ const HotelDetails = () => {
         </div>
       </div>
 
-      {/* Grid Image Gallery layout structural patterns */}
-      <div className="row g-2 mb-5">
-        <div className="col-md-8">
+      {/* Grid Image Gallery layout - responsive for all screen sizes */}
+      <div className="mb-5">
+        {/* Main Image - Full width on all screens */}
+        <div className="mb-3">
           <img 
             src={getImageUrl(0)} 
             alt={`${hotel.hotelName || 'Hotel'} main preview`} 
             className="img-fluid w-100 rounded shadow-sm" 
-            style={{ height: '400px', objectFit: 'cover' }} 
+            style={{ height: '300px', objectFit: 'cover', maxHeight: '500px' }} 
           />
         </div>
-        <div className="col-md-4 d-flex flex-column gap-2">
+        
+        {/* Secondary Images - Row layout on all screens */}
+        <div className="d-flex gap-2 overflow-x-auto">
           <img 
             src={getImageUrl(1)} 
             alt={`${hotel.hotelName || 'Hotel'} view secondary`} 
-            className="img-fluid w-100 rounded shadow-sm" 
-            style={{ height: '196px', objectFit: 'cover' }} 
+            className="img-fluid rounded shadow-sm flex-shrink-0" 
+            style={{ height: '120px', minWidth: '120px', objectFit: 'cover' }} 
           />
           <img 
             src={getImageUrl(2)} 
             alt={`${hotel.hotelName || 'Hotel'} interior view`} 
-            className="img-fluid w-100 rounded shadow-sm" 
-            style={{ height: '196px', objectFit: 'cover' }} 
+            className="img-fluid rounded shadow-sm flex-shrink-0" 
+            style={{ height: '120px', minWidth: '120px', objectFit: 'cover' }} 
           />
         </div>
       </div>
@@ -194,6 +244,81 @@ const HotelDetails = () => {
           </div>
         </div>
         
+      </div>
+      <div className="row mt-5">
+        <div className="col-lg-8">
+          <div className="card shadow-sm border-0 mb-4">
+            <div className="card-body">
+              <h3 className="fw-bold mb-3">Guest Reviews</h3>
+              {hotel.reviews && hotel.reviews.length > 0 ? (
+                <div className="list-group">
+                  {hotel.reviews.map((review) => (
+                    <div key={review._id} className="list-group-item list-group-item-action mb-3 rounded-3 shadow-sm">
+                      <div className="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h5 className="mb-1">{review.userId?.name || 'Guest'}</h5>
+                          <small className="text-muted">{new Date(review.createdAt).toLocaleDateString()}</small>
+                        </div>
+                        <span className="badge bg-warning text-dark">{review.rating} ★</span>
+                      </div>
+                      <p className="mt-3 mb-1">{review.comment}</p>
+                      {review.reply?.message && (
+                        <div className="border rounded-3 bg-light p-3 mt-3">
+                          <strong className="d-block mb-1">Manager Reply</strong>
+                          <p className="mb-1 small">{review.reply.message}</p>
+                          <small className="text-muted">{review.reply.repliedAt ? new Date(review.reply.repliedAt).toLocaleDateString() : ''}</small>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-muted">No reviews yet for this hotel.</div>
+              )}
+            </div>
+          </div>
+
+          {user?.role === 'User' && (
+            <div className="card shadow-sm border-0 mb-4">
+              <div className="card-body">
+                <h3 className="fw-bold mb-3">Leave a Review</h3>
+                {myReview ? (
+                  <div className="alert alert-info">You have already submitted a review for this hotel.</div>
+                ) : (
+                  <form onSubmit={handleReviewSubmit}>
+                    {reviewError && <div className="alert alert-danger">{reviewError}</div>}
+                    {reviewSuccess && <div className="alert alert-success">{reviewSuccess}</div>}
+                    <div className="mb-3">
+                      <label className="form-label">Rating</label>
+                      <select name="rating" value={reviewForm.rating} onChange={handleReviewChange} className="form-select" required>
+                        <option value={0}>Select rating</option>
+                        <option value={1}>1 - Poor</option>
+                        <option value={2}>2 - Fair</option>
+                        <option value={3}>3 - Good</option>
+                        <option value={4}>4 - Very good</option>
+                        <option value={5}>5 - Excellent</option>
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Comment</label>
+                      <textarea
+                        name="comment"
+                        value={reviewForm.comment}
+                        onChange={handleReviewChange}
+                        className="form-control"
+                        rows={4}
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-primary" disabled={reviewLoading}>
+                      {reviewLoading ? 'Submitting...' : 'Submit Review'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

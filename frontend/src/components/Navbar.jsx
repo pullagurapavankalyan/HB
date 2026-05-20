@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, logoutUser } from '../store/slices/authSlice';
+import { fetchLoyalty } from '../store/slices/loyaltySlice';
 import SearchBar from './SearchBar';
 
 const Navbar = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { unreadCount } = useSelector((state) => state.notification);
+  const { account } = useSelector((state) => state.loyalty);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
@@ -32,6 +34,12 @@ const Navbar = () => {
   // 2. Clear helper functions to toggle state cleanly
   const toggleNavbar = () => setIsNavOpen(!isNavOpen);
   const closeNavbar = () => setIsNavOpen(false);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'User') {
+      dispatch(fetchLoyalty());
+    }
+  }, [dispatch, isAuthenticated, user?.role]);
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
@@ -74,8 +82,11 @@ const Navbar = () => {
                     <li className="nav-item">
                       <Link className="nav-link" to="/my-bookings" onClick={closeNavbar}>My Bookings</Link>
                     </li>
-                    <li className="nav-item">
-                      <Link className="nav-link" to="/loyalty" onClick={closeNavbar}>Rewards</Link>
+                    <li className="nav-item d-flex align-items-center">
+                      <span className="nav-link text-warning d-flex align-items-center" style={{ whiteSpace: 'nowrap' }}>
+                        <i className="bi bi-star-fill me-1"></i>
+                        {account?.points ?? 0} pts
+                      </span>
                     </li>
                   </>
                 )}
@@ -91,6 +102,9 @@ const Navbar = () => {
                     </li>
                     <li className="nav-item">
                       <Link className="nav-link" to="/manager/bookings" onClick={closeNavbar}>Bookings</Link>
+                    </li>
+                    <li className="nav-item">
+                      <Link className="nav-link" to="/manager/reviews" onClick={closeNavbar}>Reviews</Link>
                     </li>
                     <li className="nav-item">
                       <Link className="nav-link" to="/manager/dashboard" onClick={closeNavbar}>Dashboard</Link>

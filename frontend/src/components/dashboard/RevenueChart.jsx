@@ -28,7 +28,7 @@ const RevenueChart = ({ data }) => {
               <XAxis dataKey="month" stroke="#8884d8" />
               <YAxis />
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <Tooltip formatter={(value) => `$${value}`} />
+              <Tooltip formatter={(value) => `₹${value}`} />
               <Area type="monotone" dataKey="revenue" stroke="#0d6efd" fillOpacity={1} fill="url(#colorRevenue)" />
             </AreaChart>
           </ResponsiveContainer>

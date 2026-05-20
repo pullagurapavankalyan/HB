@@ -21,7 +21,9 @@ export const fetchMyBookings = createAsyncThunk('booking/fetchMine', async (_, t
 
 export const cancelBooking = createAsyncThunk('booking/cancel', async (bookingId, thunkAPI) => {
   try {
-    const response = await api.put(`/bookings/${bookingId}/cancel`);
+    const token = thunkAPI.getState().auth.token;
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+    const response = await api.put(`/bookings/${bookingId}/cancel`, {}, config);
     return response.data.data;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response?.data?.message || 'Failed to cancel booking');
@@ -71,12 +73,22 @@ const bookingSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(cancelBooking.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(cancelBooking.fulfilled, (state, action) => {
+        state.loading = false;
         // Update the status in the local state array
         const index = state.bookings.findIndex(b => b._id === action.payload._id);
         if (index !== -1) {
           state.bookings[index] = action.payload;
         }
+        state.success = true;
+      })
+      .addCase(cancelBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error.message;
       });
   },
 });

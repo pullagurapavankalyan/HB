@@ -31,9 +31,6 @@ const Footer = () => {
                 <Link to="/hotels" className="text-white-50 text-decoration-none text-white-hover">Hotels</Link>
               </li>
               <li className="mb-2">
-                <Link to="/loyalty" className="text-white-50 text-decoration-none text-white-hover">Rewards</Link>
-              </li>
-              <li className="mb-2">
                 <Link to="/profile" className="text-white-50 text-decoration-none text-white-hover">Profile</Link>
               </li>
             </ul>

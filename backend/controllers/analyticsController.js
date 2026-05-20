@@ -27,11 +27,15 @@ const getRevenueAnalytics = asyncHandler(async (req, res) => {
     { $group: { _id: null, total: { $sum: '$totalAmount' } } }
   ]);
 
+  // Count total bookings (all bookings regardless of payment status)
+  const totalBookings = await Booking.countDocuments();
+
   successResponse(res, 200, 'Analytics retrieved', {
     revenueData,
     totalUsers,
     totalHotels,
-    totalRevenue: totalRevenueAllTime[0] ? totalRevenueAllTime[0].total : 0
+    totalRevenue: totalRevenueAllTime[0] ? totalRevenueAllTime[0].total : 0,
+    totalBookings
   });
 });
 

@@ -12,7 +12,7 @@ const FeaturedHotelCard = ({ hotel }) => {
             ? `${BACKEND_HOST}/api/hotels/${hotel._id}/images/${hotel.images[0]._id}`
             : hotel.images?.[0]?.url?.startsWith('/')
               ? `${BACKEND_HOST}${hotel.images[0].url}`
-              : hotel.images?.[0]?.url || 'https://via.placeholder.com/800x400?text=Featured'
+              : hotel.images?.[0]?.url || 'https://placeholder.co/800x400?text=Featured'
         } 
         className="card-img h-100" 
         alt={hotel.hotelName} 

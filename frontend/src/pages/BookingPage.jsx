@@ -34,7 +34,7 @@ const BookingPage = () => {
 
   // Safe helper to extract room imagery url safely
   const getRoomImageUrl = () => {
-    const fallbackPlaceholder = 'https://via.placeholder.com/400x200?text=Room+Image';
+    const fallbackPlaceholder = 'https://placeholder.co/400x200?text=Room+Image';
     const imgItem = room?.images?.[0];
     if (!imgItem) return fallbackPlaceholder;
     return typeof imgItem === 'object' ? imgItem.url : imgItem;
@@ -83,7 +83,7 @@ const BookingPage = () => {
               </p>
               
               <h4 className="text-success fw-bold">
-                ${room.price || 0} <span className="text-muted fs-6 fw-normal">/ night</span>
+                ₹{room.price || 0} <span className="text-muted fs-6 fw-normal">/ night</span>
               </h4>
             </div>
           </div>

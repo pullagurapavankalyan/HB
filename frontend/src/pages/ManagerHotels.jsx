@@ -190,7 +190,7 @@ const ManagerHotels = () => {
               ? `${BACKEND_HOST}/api/hotels/${hotel._id}/images/${hotel.images[0]._id}`
               : hotel.images?.[0]?.url?.startsWith('/')
                 ? `${BACKEND_HOST}${hotel.images[0].url}`
-                : hotel.images?.[0]?.url || 'https://via.placeholder.com/500x300?text=Hotel+Image'
+                : hotel.images?.[0]?.url || 'https://placeholder.co/500x300?text=Hotel+Image'
           }
           className="card-img-top"
           alt={hotel.hotelName}
@@ -219,7 +219,12 @@ const ManagerHotels = () => {
           <p className="text-muted mb-0">Manage your property listings, rooms, and hotel details from one place.</p>
         </div>
         <div className="d-flex gap-2">
-          <button className="btn btn-primary" onClick={() => { setShowForm(true); setEditingHotel(null); setSuccessMessage(''); setError(null); resetForm(); }}>
+          <button
+            className="btn btn-primary"
+            onClick={() => { setShowForm(true); setEditingHotel(null); setSuccessMessage(''); setError(null); resetForm(); }}
+            disabled={hotels.length >= 1}
+            title={hotels.length >= 1 ? 'You can only manage one hotel' : 'Add a new property'}
+          >
             Add Property
           </button>
         </div>

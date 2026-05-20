@@ -12,7 +12,7 @@ const processPaymentIntent = async (bookingId, amount, userId) => {
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountCents,
-    currency: 'usd',
+    currency: 'inr',
     metadata: { bookingId: bookingId.toString(), userId: userId.toString() }
   });
 

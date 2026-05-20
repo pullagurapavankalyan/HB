@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
       enum: ['Guest', 'User', 'Manager', 'Admin'],
       default: 'User',
     },
-    profileImage: { type: String, default: 'https://via.placeholder.com/150' },
+    profileImage: { type: String, default: 'https://placeholder.co/150' },
     loyaltyPoints: { type: Number, default: 0 },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Hotel' }],
     bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }],

@@ -32,15 +32,16 @@ const createBooking = asyncHandler(async (req, res) => {
 
     // Ensure bookedDates array exists safely
     const datesArray = room.bookedDates || [];
+    const totalUnits = room.quantity || 1;
 
-    // 2. Clear date ranges for conflicting bookings
-    const isOverlap = datesArray.some((b) => {
+    // 2. Count overlapping bookings and allow booking until room quantity is exhausted
+    const overlappedBookings = datesArray.filter((b) => {
       const existingCheckIn = new Date(b.checkIn);
       const existingCheckOut = new Date(b.checkOut);
       return inDate < existingCheckOut && outDate > existingCheckIn;
     });
 
-    if (isOverlap) {
+    if (overlappedBookings.length >= totalUnits) {
       return errorResponse(res, 400, 'Room is already booked for the selected dates');
     }
 
@@ -128,10 +129,18 @@ const getManagerBookings = asyncHandler(async (req, res) => {
 // @route   PUT /api/bookings/:id/cancel
 // @access  Private
 const cancelBooking = asyncHandler(async (req, res) => {
+  console.log(`Attempting to cancel booking ${req.params.id} for user ${req.user?._id}`);
   const booking = await Booking.findById(req.params.id);
   if (!booking) return errorResponse(res, 404, 'Booking not found');
 
-  if (booking.userId.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
+  console.log(`Current booking status: ${booking.bookingStatus}, userId: ${booking.userId}`);
+
+  if (String(booking.userId) !== String(req.user._id) && req.user.role !== 'Admin') {
+    console.error('Cancellation unauthorized: user mismatch', {
+      bookingUser: String(booking.userId),
+      requester: String(req.user._id),
+      role: req.user.role
+    });
     return errorResponse(res, 403, 'Not authorized');
   }
 
@@ -139,26 +148,21 @@ const cancelBooking = asyncHandler(async (req, res) => {
     return errorResponse(res, 400, 'Cannot cancel this booking');
   }
 
-  // Transaction to cancel and free up room
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     booking.bookingStatus = 'cancelled';
     booking.cancellationReason = req.body.reason || 'User cancelled';
-    await booking.save({ session });
+    await booking.save();
+
+    console.log(`Booking ${booking._id} cancelled; removing booked dates.`);
 
     await Room.findByIdAndUpdate(booking.roomId, {
       $pull: { bookedDates: { bookingId: booking._id } }
-    }, { session });
+    });
 
-    await session.commitTransaction();
-    session.endSession();
-
+    console.log(`Booking cancellation complete for ${booking._id}`);
     successResponse(res, 200, 'Booking cancelled successfully', booking);
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    console.error('Error cancelling booking:', error);
     return errorResponse(res, 500, 'Error cancelling booking');
   }
 });

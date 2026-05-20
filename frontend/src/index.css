@@ -55,7 +55,7 @@ body {
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
@@ -108,4 +108,67 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* Responsive dropdown fixes: ensure dropdown menus fit inside small screens */
+.form-select,
+.form-select-sm {
+   width: 100% !important;
+   max-width: 100% !important;
+   min-width: 0 !important;
+   box-sizing: border-box !important;
+}
+
+select.form-select option {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+@media (max-width: 576px) {
+  .dropdown-menu {
+    left: 0 !important;
+    right: 0 !important;
+    width: calc(100% - 1rem) !important;
+    margin: 0.4rem !important;
+    transform: none !important;
+    position: absolute !important;
+    z-index: 1050 !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08) !important;
+  }
+
+  .form-select,
+  .form-select-sm {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* When using dropdown-menu-end, align to right edge but still within viewport */
+  .dropdown-menu.dropdown-menu-end {
+    left: auto !important;
+    right: 0 !important;
+  }
+
+  /* Make dropdown items wrap and remain readable */
+  .dropdown-menu .dropdown-item {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 768px) {
+  .dropdown-menu {
+    max-width: calc(100vw - 1rem) !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .dropdown-menu {
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    max-width: calc(100vw - 1rem) !important;
+    margin: 0.4rem !important;
+    box-sizing: border-box !important;
+  }
 }

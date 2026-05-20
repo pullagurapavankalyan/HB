@@ -19,6 +19,7 @@ const ManagerLayout = () => {
                 <Nav.Link as={Link} to="/manager/rooms" className={`mb-2 rounded ${isActive('/manager/rooms')}`}>Manage Rooms</Nav.Link>
                 <Nav.Link as={Link} to="/manager/bookings" className={`mb-2 rounded ${isActive('/manager/bookings')}`}>Hotel Bookings</Nav.Link>
                 <Nav.Link as={Link} to="/manager/analytics" className={`mb-2 rounded ${isActive('/manager/analytics')}`}>Revenue Analytics</Nav.Link>
+                <Nav.Link as={Link} to="/manager/reviews" className={`mb-2 rounded ${isActive('/manager/reviews')}`}>Reviews</Nav.Link>
               </Nav>
             </div>
           </div>

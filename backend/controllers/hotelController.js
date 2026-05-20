@@ -265,7 +265,7 @@ const getHotelImage = asyncHandler(async (req, res) => {
 
   const image = hotel.images.id(imageId);
   if (!image || !image.data || image.data.length === 0) {
-    return res.redirect('https://via.placeholder.com/400x250?text=Image+Not+Found');
+    return res.redirect('https://placeholder.co/400x250?text=Image+Not+Found');
   }
 
   const contentType = image.contentType || 'image/jpeg';

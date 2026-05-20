@@ -2,8 +2,8 @@ import React from 'react';
 
 const SortDropdown = ({ sortBy, onSortChange }) => {
   return (
-    <div className="d-flex align-items-center">
-      <span className="text-muted me-2 small fw-semibold text-nowrap">Sort By:</span>
+    <div className="d-flex flex-wrap align-items-center gap-2">
+      <span className="text-muted me-2 small fw-semibold">Sort By:</span>
       <select 
         className="form-select form-select-sm border-0 bg-light" 
         value={sortBy} 

@@ -1,15 +1,15 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Card, Row, Col, ProgressBar } from 'react-bootstrap';
-import { AuthContext } from '../context/AuthContext';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 const LoyaltyDashboard = () => {
-  const { user } = useContext(AuthContext);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const [loyaltyData, setLoyaltyData] = useState({ points: 0, tier: 'Bronze' });
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticated) {
       navigate('/login');
     }
     // Simulate fetching loyalty data
