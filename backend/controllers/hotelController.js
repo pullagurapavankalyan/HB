@@ -46,9 +46,13 @@ const getHotels = asyncHandler(async (req, res) => {
   const query = { isActive: true };
 
   if (req.query.keyword) {
+    const keywordRegex = { $regex: req.query.keyword.trim(), $options: 'i' };
     query.$or = [
-      { hotelName: { $regex: req.query.keyword, $options: 'i' } },
-      { city: { $regex: req.query.keyword, $options: 'i' } }
+      { hotelName: keywordRegex },
+      { city: keywordRegex },
+      { state: keywordRegex },
+      { country: keywordRegex },
+      { address: keywordRegex }
     ];
   }
 

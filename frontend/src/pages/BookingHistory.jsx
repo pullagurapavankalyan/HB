@@ -36,7 +36,7 @@ const BookingHistory = () => {
 
   return (
     <div className="container py-5">
-      <h2 className="fw-bold mb-4">My Bookings</h2>
+      <h2 className="fw-bold mb-4">Bookings History</h2>
       
       {loading ? (
         <Loader />

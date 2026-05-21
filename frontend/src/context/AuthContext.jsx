@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userInfo = localStorage.getItem('userInfo');
+    const userInfo = sessionStorage.getItem('userInfo');
     if (userInfo) {
       try {
         const parsedUser = JSON.parse(userInfo);
@@ -19,12 +19,12 @@ export const AuthProvider = ({ children }) => {
             setUser(parsedUser);
             axios.defaults.headers.common['Authorization'] = `Bearer ${parsedUser.token}`;
           } else {
-            localStorage.removeItem('userInfo');
+            sessionStorage.removeItem('userInfo');
           }
         }
       } catch (error) {
         console.error('Invalid token');
-        localStorage.removeItem('userInfo');
+        sessionStorage.removeItem('userInfo');
       }
     }
     setLoading(false);
@@ -32,13 +32,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('userInfo', JSON.stringify(userData));
+    sessionStorage.setItem('userInfo', JSON.stringify(userData));
     axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('userInfo');
+    sessionStorage.removeItem('userInfo');
     delete axios.defaults.headers.common['Authorization'];
   };
 

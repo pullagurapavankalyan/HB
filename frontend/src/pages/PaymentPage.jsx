@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { createPaymentIntent, resetPayment } from '../store/slices/paymentSlice';
+import { fetchLoyalty } from '../store/slices/loyaltySlice';
 import PaymentForm from '../components/payment/PaymentForm';
 import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
@@ -36,9 +37,10 @@ const PaymentPage = () => {
     };
   }, [dispatch, bookingId]);
 
-  const handlePaymentSuccess = () => {
-    navigate(`/booking-success/${bookingId}`);
-  };
+  const handlePaymentSuccess = async () => {
+      await dispatch(fetchLoyalty()).unwrap().catch(() => {});
+      navigate(`/booking-success/${bookingId}`);
+    };
 
   if (loading && !clientSecret) return <Loader fullscreen />;
 

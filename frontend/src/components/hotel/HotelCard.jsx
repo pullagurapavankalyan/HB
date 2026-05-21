@@ -12,11 +12,13 @@ const HotelCard = ({ hotel }) => {
 
   const imageUrl = hotel.images?.[0]?._id
     ? `${BACKEND_HOST}/api/hotels/${hotel._id}/images/${hotel.images[0]._id}`
-    : typeof hotel.images?.[0] === 'object'
-      ? hotel.images[0]?.url?.startsWith('/')
-        ? `${BACKEND_HOST}${hotel.images[0].url}`
-        : hotel.images[0]?.url || 'https://placeholder.co/400x250?text=Hotel'
-      : hotel.images?.[0] || 'https://placeholder.co/400x250?text=Hotel';
+      : typeof hotel.images?.[0] === 'object'
+        ? hotel.images[0]?.url?.startsWith('/')
+          ? `${BACKEND_HOST}${hotel.images[0].url}`
+          : hotel.images[0]?.url || 'https://via.placeholder.com/400x250?text=Hotel'
+      : hotel.images?.[0]?.startsWith('/')
+        ? `${BACKEND_HOST}${hotel.images[0]}`
+        : hotel.images?.[0] || 'https://via.placeholder.com/400x250?text=Hotel';
 
   const isWishlisted = items.some(item => item._id === hotel._id);
 
@@ -30,7 +32,8 @@ const HotelCard = ({ hotel }) => {
   };
 
   return (
-    <div className="card h-100 shadow-sm border-0 position-relative overflow-hidden" style={{ borderRadius: '12px' }}>
+    <Link to={`/hotels/${hotel._id}`} className="text-decoration-none text-body">
+      <div className="card h-100 shadow-sm border-0 position-relative overflow-hidden" style={{ borderRadius: '12px' }}>
       {user?.role === 'User' && (
         <button 
           className="btn position-absolute top-0 end-0 m-2 p-1 bg-white rounded-circle shadow-sm"
@@ -66,12 +69,11 @@ const HotelCard = ({ hotel }) => {
         </p>
         
         <div className="mt-auto d-flex justify-content-between align-items-center">
-          <Link to={`/hotels/${hotel._id}`} className="btn btn-outline-primary btn-sm">
-            View Details
-          </Link>
+          <span className="btn btn-outline-primary btn-sm">View Details</span>
         </div>
       </div>
-    </div>
+      </div>
+    </Link>
   );
 };
 

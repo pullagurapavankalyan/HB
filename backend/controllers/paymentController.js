@@ -2,6 +2,7 @@ const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
+const { calculateLoyaltyPoints, upgradeTierIfNeeded } = require('../services/loyaltyService');
 const asyncHandler = require('../middleware/asyncHandler');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 
@@ -74,17 +75,33 @@ const stripeWebhook = asyncHandler(async (req, res) => {
     const paymentIntent = event.data.object;
     const bookingId = paymentIntent.metadata.bookingId;
 
-    // Update payment record
-    await Payment.findOneAndUpdate(
-      { paymentId: paymentIntent.id },
-      { transactionStatus: 'succeeded', webhookVerified: true }
-    );
+    // Update payment record and only distribute points once
+    const payment = await Payment.findOne({ paymentId: paymentIntent.id });
+    if (payment && payment.transactionStatus !== 'succeeded') {
+      await Payment.findByIdAndUpdate(payment._id, { transactionStatus: 'succeeded', webhookVerified: true });
+
+      // Update booking status
+      const booking = await Booking.findByIdAndUpdate(bookingId, {
+        paymentStatus: 'paid',
+        bookingStatus: 'confirmed'
+      }, { new: true });
+
+      if (booking && booking.loyaltyPointsEarned > 0) {
+        await calculateLoyaltyPoints(booking.userId, booking.loyaltyPointsEarned, booking._id);
+        await upgradeTierIfNeeded(booking.userId);
+      }
+    }
 
     // Update booking status
-    await Booking.findByIdAndUpdate(bookingId, {
+    const booking = await Booking.findByIdAndUpdate(bookingId, {
       paymentStatus: 'paid',
       bookingStatus: 'confirmed'
-    });
+    }, { new: true });
+
+    if (booking && booking.loyaltyPointsEarned > 0) {
+      await calculateLoyaltyPoints(booking.userId, booking.loyaltyPointsEarned, booking._id);
+      await upgradeTierIfNeeded(booking.userId);
+    }
 
     console.log(`Payment confirmed for Booking: ${bookingId}`);
   }
@@ -103,18 +120,20 @@ const confirmPayment = asyncHandler(async (req, res) => {
   }
 
   // Update payment record
-  const payment = await Payment.findOneAndUpdate(
-    { paymentId },
-    { transactionStatus: 'succeeded', webhookVerified: true },
-    { new: true }
-  );
-
+  const payment = await Payment.findOne({ paymentId });
   if (!payment) {
     return errorResponse(res, 404, 'Payment not found');
   }
 
+  if (payment.transactionStatus === 'succeeded') {
+    const booking = await Booking.findById(bookingId);
+    return successResponse(res, 200, 'Payment already confirmed', { booking, payment });
+  }
+
+  await Payment.findByIdAndUpdate(payment._id, { transactionStatus: 'succeeded', webhookVerified: true });
+
   // Update booking status
-  const booking = await Booking.findByIdAndUpdate(
+  const confirmedBooking = await Booking.findByIdAndUpdate(
     bookingId,
     {
       paymentStatus: 'paid',
@@ -123,8 +142,13 @@ const confirmPayment = asyncHandler(async (req, res) => {
     { new: true }
   );
 
+  if (confirmedBooking && confirmedBooking.loyaltyPointsEarned > 0) {
+    await calculateLoyaltyPoints(confirmedBooking.userId, confirmedBooking.loyaltyPointsEarned, confirmedBooking._id);
+    await upgradeTierIfNeeded(confirmedBooking.userId);
+  }
+
   successResponse(res, 200, 'Payment confirmed successfully', {
-    booking,
+    booking: confirmedBooking,
     payment
   });
 });

@@ -33,6 +33,10 @@ const Hotels = () => {
     }));
   }, [dispatch, page, sort, filters, keywordParams]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [keywordParams]);
+
   const handleFilterApply = (newFilters) => {
     setFilters(newFilters);
     setPage(1); // Reset to page 1 on new filter
@@ -41,10 +45,10 @@ const Hotels = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   return (
-    <div className="container py-5">
-      <div className="row mb-4 align-items-center">
+    <div className="container py-4">
+      <div className="row mb-3 align-items-center">
         <div className="col-6 col-md-6">
-          <h2 className="fw-bold mb-0 fs-5 fs-md-4">
+          <h2 className="fw-bold mb-3 fs-5 fs-md-4">
             {keywordParams ? `Search Results for "${keywordParams}"` : 'Explore Hotels'}
           </h2>
         </div>

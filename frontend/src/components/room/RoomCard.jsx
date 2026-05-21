@@ -1,15 +1,32 @@
 import React from 'react';
 
-const RoomCard = ({ room, onBookNow, canBook = true }) => {
+const RoomCard = ({ room, hotelId, onBookNow, canBook = true }) => {
   
   // Safe helper to evaluate multi-type configurations for room imagery payloads
   const BACKEND_HOST = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
-  
+  const fallbackPlaceholder = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#f1f3f5" />
+      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#adb5bd" font-family="Arial, sans-serif" font-size="18">No Image Available</text>
+    </svg>
+  `);
+
   const getRoomImageUrl = () => {
-    const fallbackPlaceholder = 'https://placeholder.co/300x200?text=Room';
     const imgItem = room?.images?.[0];
     if (!imgItem) return fallbackPlaceholder;
-    return typeof imgItem === 'object' ? imgItem.url : imgItem;
+    if (typeof imgItem === 'object') {
+      if (imgItem._id) {
+        return `${BACKEND_HOST}/api/hotels/${hotelId || room.hotelId}/images/${imgItem._id}`;
+      }
+      if (imgItem.url) {
+        return imgItem.url.startsWith('/') ? `${BACKEND_HOST}${imgItem.url}` : imgItem.url;
+      }
+      return fallbackPlaceholder;
+    }
+    if (typeof imgItem === 'string' && imgItem.startsWith('/')) {
+      return `${BACKEND_HOST}${imgItem}`;
+    }
+    return imgItem || fallbackPlaceholder;
   };
 
   return (
@@ -17,13 +34,7 @@ const RoomCard = ({ room, onBookNow, canBook = true }) => {
       <div className="row g-0">
         <div className="col-md-4">
           <img 
-            src={
-              room.images?.[0]?._id
-                ? `${BACKEND_HOST}/api/hotels/${room.hotelId}/images/${room.images[0]._id}`
-                : room.images?.[0]?.url?.startsWith('/')
-                  ? `${BACKEND_HOST}${room.images[0].url}`
-                  : room.images?.[0]?.url || 'https://placeholder.co/300x200?text=Room'
-            }
+            src={getRoomImageUrl()}
             className="img-fluid rounded-start h-100" 
             alt={room.roomType || "Hotel Room"} 
             style={{ objectFit: 'cover', minHeight: '100%' }}
@@ -69,7 +80,7 @@ const RoomCard = ({ room, onBookNow, canBook = true }) => {
 
             {canBook ? (
               <button className="btn btn-primary w-100 fw-bold" onClick={() => onBookNow(room)}>
-                Book This Room
+                Book
               </button>
             ) : (
               <button className="btn btn-secondary w-100 fw-bold" disabled>

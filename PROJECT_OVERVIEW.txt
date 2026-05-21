@@ -1,0 +1,388 @@
+HotelBooking Project Overview
+=============================
+
+This document explains the project folder structure, technology stack, architecture, mechanism, terminology, and end-to-end flow for the HotelBooking application.
+
+1. Project Structure
+--------------------
+
+hotel_booking/
+  backend/
+  frontend/
+  scripts/
+
+The project is separated into backend and frontend folders, with optional deployment scripts under scripts/.
+
+2. Backend Overview
+-------------------
+
+The backend is a Node.js + Express API server with MongoDB via Mongoose.
+
+backend/.env
+  - Stores environment variables such as database URL, JWT secret, Stripe keys, and other secrets.
+
+backend/.env.example
+  - Example environment file showing required variables without actual secrets.
+
+backend/package.json
+  - Defines backend dependencies and scripts for running the API.
+
+backend/server.js
+  - Entry point of the backend.
+  - Sets up Express, middleware, routes, error handlers, and connects to MongoDB.
+  - Typically imports database config and mounts route handlers.
+
+backend/config/db.js
+  - Contains MongoDB connection logic using Mongoose.
+  - Responsible for connecting to the database and handling connection errors.
+
+backend/routes/
+  - Contains Express route definitions organized by feature.
+  - Example route files:
+    - adminRoutes.js
+    - analyticsRoutes.js
+    - authRoutes.js
+    - bookingRoutes.js
+    - couponRoutes.js
+    - hotelRoutes.js
+    - loyaltyRoutes.js
+    - notificationRoutes.js
+    - paymentRoutes.js
+    - reviewRoutes.js
+    - roomRoutes.js
+    - supportRoutes.js
+    - userRoutes.js
+    - wishlistRoutes.js
+
+backend/controllers/
+  - Contains controller functions that implement feature logic and respond to API requests.
+  - Controllers receive requests from routes, call services/models, and return JSON results.
+  - Example controller responsibilities:
+    - authController.js: user login, registration, token creation, password reset.
+    - bookingController.js: create/cancel bookings, booking status.
+    - hotelController.js: list hotels, search, hotel details, create/update hotels.
+    - roomController.js: manage room data, availability.
+    - loyaltyController.js: track loyalty/star points and redemption.
+    - paymentController.js: handle Stripe payments and confirmation.
+    - reviewController.js: submit and fetch hotel reviews.
+    - wishlistController.js: manage user wishlist items.
+    - supportController.js: support tickets.
+    - notificationController.js: create/read notifications.
+    - analyticsController.js: retrieve reporting data.
+    - adminController.js: admin-specific actions.
+
+backend/models/
+  - Mongoose schemas and models representing database entities.
+  - Example models:
+    - User.js
+    - Hotel.js
+    - Room.js
+    - Booking.js
+    - Payment.js
+    - Coupon.js
+    - LoyaltyAccount.js
+    - Transaction.js
+    - Review.js
+    - Notification.js
+    - SupportTicket.js
+    - Wishlist.js
+
+backend/middleware/
+  - Middleware functions used by Express.
+  - Example middleware:
+    - asyncHandler.js: wraps async route handlers and passes errors to the error handler.
+    - authMiddleware.js: protects routes by verifying JWT tokens.
+    - roleMiddleware.js: restricts access by user role (User, Manager, Admin).
+    - errorMiddleware.js: centralized error handling for API responses.
+    - notFoundMiddleware.js: catches unmatched routes.
+    - uploadMiddleware.js: file upload handling.
+    - validationMiddleware.js: request validation.
+
+backend/services/
+  - Contains reusable logic and integrations.
+  - Example services:
+    - emailService.js: send email notifications.
+    - paymentService.js: handle Stripe payment flows.
+    - loyaltyService.js: calculate and update loyalty/star points.
+    - notificationService.js: create user notifications.
+    - analyticsService.js: aggregate reporting data.
+    - cronService.js: scheduled tasks.
+    - socketService.js: real-time event handling.
+
+backend/utils/
+  - Utility helpers used across the backend.
+  - Example utilities:
+    - apiResponse.js: consistent success/error JSON response wrapper.
+    - cloudinary.js: image upload helper (if used).
+    - envChecker.js: verify required environment variables.
+    - generateToken.js: generate JWT tokens.
+    - logger.js: application logging.
+
+backend/uploads/
+  - Stores uploaded files such as hotel and room images when using local storage.
+
+backend/seeder.js
+  - A script to seed initial data into the database, such as sample hotels, rooms, users.
+
+3. Frontend Overview
+--------------------
+
+The frontend is a React application built with Vite and uses Redux Toolkit for state management.
+
+frontend/package.json
+  - Defines frontend dependencies and scripts.
+  - Uses React, React Router, Redux Toolkit, Axios, Bootstrap, Bootstrap Icons, and Vite.
+
+frontend/index.html
+  - Base HTML document for the React app.
+
+frontend/vite.config.js
+  - Vite configuration for development and build.
+
+frontend/README.md
+  - Frontend-specific usage instructions if present.
+
+frontend/.env
+  - Local environment variables for frontend build, such as API base URL.
+
+frontend/src/
+  - Main application source code.
+
+frontend/src/main.jsx
+  - React entry point.
+  - Renders the app into the DOM and wraps it with Redux provider or router as needed.
+
+frontend/src/App.jsx
+  - Main application component.
+  - Defines layout and routing structure for pages.
+
+frontend/src/api/axios.js
+  - Configures Axios instance for API calls.
+  - Includes base URL, request interceptors, and auth token headers.
+
+frontend/src/store/
+  - Redux store setup and slices.
+  - Example slices:
+    - authSlice.js
+    - hotelSlice.js
+    - bookingSlice.js
+    - loyaltySlice.js
+    - wishlistSlice.js
+    - paymentSlice.js
+  - Provides global state for user session, hotels, bookings, loyalty points, and more.
+
+frontend/src/components/
+  - Reusable UI components.
+  - Contains shared components and nested feature components.
+  - Example common components:
+    - Loader.jsx, ErrorMessage.jsx, Navbar.jsx, Footer.jsx, Sidebar.jsx, Pagination.jsx, ProtectedRoute.jsx
+  - Hotel-related components:
+    - HotelCard.jsx, FeaturedHotelCard.jsx, etc.
+  - Room-related components:
+    - RoomCard.jsx
+  - Booking-related components:
+    - forms, summaries.
+
+frontend/src/pages/
+  - Page-level views used by React Router.
+  - Example pages:
+    - Home.jsx
+    - Hotels.jsx
+    - HotelDetails.jsx
+    - BookingPage.jsx
+    - Login.jsx
+    - Register.jsx
+    - UserProfile.jsx
+    - ManagerHotels.jsx
+    - PaymentPage.jsx
+    - Support.jsx
+    - Reviews.jsx
+    - Analytics pages.
+
+frontend/src/layouts/
+  - Layout wrappers for authenticated sections or manager/admin panels.
+
+frontend/src/context/
+  - React context providers if any are used alongside Redux.
+
+frontend/src/utils/
+  - Frontend utility helpers.
+  - Could include formatting, auth helpers, or UI helpers.
+
+frontend/public/
+  - Static assets served by the build.
+
+4. Technology Stack
+-------------------
+
+Backend Technology
+  - Node.js: JavaScript runtime for the server.
+  - Express: lightweight web framework for defining API routes and middleware.
+  - MongoDB: NoSQL database used to store hotels, rooms, users, bookings, and loyalty data.
+  - Mongoose: ODM for MongoDB schema definitions and database operations.
+  - JWT: JSON Web Tokens for stateless authentication.
+  - Stripe: payment gateway integration for booking payments.
+  - Docker: containerization of backend services using Dockerfile.
+  - dotenv: load environment variables from .env files.
+
+Frontend Technology
+  - React: UI library for building the SPA.
+  - React Router: client-side routing.
+  - Redux Toolkit: global state management, API calls, and async thunks.
+  - Axios: HTTP client used to call backend APIs.
+  - Bootstrap: CSS framework for responsive UI and layout.
+  - Bootstrap Icons: icon library.
+  - Vite: fast development build tool and bundler.
+  - Docker: optional containerization for frontend using Dockerfile.
+  - Vercel configuration: optional deployment settings.
+
+Deployment / Build Technology
+  - Dockerfiles in backend and frontend support container building.
+  - nginx.conf may be used for serving frontend in production.
+  - Vercel configuration may indicate deployment to Vercel.
+
+5. Key Mechanisms and Terminology
+---------------------------------
+
+API Endpoint
+  - A URL exposed by the backend where the frontend sends HTTP requests.
+  - Examples: GET /api/hotels, POST /api/auth/login, POST /api/bookings.
+
+Controller
+  - A backend function that handles request logic and prepares a response.
+  - Receives `req` and `res` objects from Express.
+
+Middleware
+  - Functions that run before route handlers.
+  - Used for authentication, validation, error handling, file upload processing.
+
+Model
+  - A Mongoose schema representing a collection in MongoDB.
+  - Enforces structure for documents like User, Hotel, Room, Booking.
+
+Slice
+  - A Redux Toolkit concept grouping state, reducers, and actions for one feature.
+  - Example: authSlice manages user login state.
+
+Thunk
+  - An asynchronous Redux action, often used to fetch data from APIs.
+  - Example: fetchHotelDetails triggers API call and updates Redux state.
+
+ProtectedRoute
+  - A frontend route component that blocks navigation if the user is not authenticated.
+
+Loyalty / Star Points
+  - A rewards system tracking points earned by users when booking rooms.
+  - Business rule example: 1 point per 100 rupees spent.
+  - Users redeem points in increments (e.g. 10 points for 5% discount).
+
+Room Card
+  - UI component displaying room details on hotel details page.
+  - Includes image, price, capacity and booking action.
+
+Search Flow
+  - The frontend search UI sends a keyword or filter query to the backend.
+  - The backend searches hotels by name, city, state, country, or address and returns matches.
+
+Booking Flow
+  - User selects a hotel and room.
+  - Room selection navigates to booking page with room and hotel state.
+  - Booking page collects user booking details and submits to backend.
+  - Backend creates booking and may start a payment flow.
+  - Payment confirmation updates booking and loyalty points.
+
+Authentication Flow
+  - Frontend logs in user using email/password via auth API.
+  - Backend validates credentials and returns a JWT token.
+  - Frontend stores the token (usually in local storage or Redux state) and uses it for protected API calls.
+
+6. Project Flow
+---------------
+
+1. Application Start
+   - Backend: `server.js` starts Express, connects to MongoDB, and registers routes.
+   - Frontend: `src/main.jsx` mounts React and loads `App.jsx`.
+
+2. User Navigation
+   - React Router renders pages based on URL.
+   - Public pages: home, hotels listing, hotel details, login, register.
+   - Protected pages: booking, profile, manager/admin dashboards.
+
+3. Data Fetching
+   - Pages dispatch Redux thunks or call Axios directly.
+   - Backend routes receive the request and call controllers.
+   - Controllers use models/services to query MongoDB and return JSON.
+   - Frontend stores response data in Redux state and renders UI.
+
+4. Search and Discover
+   - User enters a location, hotel name, or keyword.
+   - The frontend sends `keyword` to `/api/hotels`.
+   - Backend filters hotels using regex across hotelName, city, state, country, address.
+   - Matching hotels are displayed in hotel cards.
+
+5. Hotel Details
+   - User clicks a hotel card or navigates directly to `/hotels/:id`.
+   - Frontend fetches hotel details from `/api/hotels/:id`.
+   - The hotel details page displays images, amenities, description, rooms, and reviews.
+   - Room cards show individual room data and allow booking.
+
+6. Booking and Payment
+   - Selecting Book begins the booking flow.
+   - The booking page displays room and hotel details and a booking form.
+   - On submit, the booking is created and payment is processed.
+   - After successful payment, backend updates booking status and loyalty points.
+
+7. Loyalty / Star Points
+   - Points are tracked on user loyalty accounts.
+   - Points may be earned when booking is confirmed.
+   - Points can be redeemed for discount on future bookings.
+   - If a booking is canceled, earned points may be revoked.
+
+8. User Account and Manager Roles
+   - Users can view profile and booking history.
+   - Managers can manage hotels and rooms through separate pages.
+   - Admins can access analytics, support, and user management.
+
+9. Deployment
+   - Frontend and backend each have Dockerfiles.
+   - `nginx.conf` may be used to serve the frontend in production.
+   - `vercel.json` suggests a possible Vercel deployment target.
+
+7. Summary of Key Files
+-----------------------
+
+Backend
+  - server.js: app bootstrap
+  - config/db.js: MongoDB connection
+  - routes/*.js: HTTP routing
+  - controllers/*.js: request logic
+  - models/*.js: database schemas
+  - middleware/*.js: auth, validation, error handling
+  - services/*.js: payments, loyalty, email, analytics
+  - utils/*.js: helpers and response formatting
+
+Frontend
+  - src/main.jsx: React app entry
+  - src/App.jsx: routes and layout
+  - src/api/axios.js: API client
+  - src/store/*: Redux store and slices
+  - src/components/*: reusable UI components
+  - src/pages/*: page views for routes
+  - src/layouts/*: layout containers
+  - src/utils/*: helper utilities
+
+8. Conceptual Architecture
+--------------------------
+
+The application is a classic full-stack web app with:
+  - Frontend SPA in React for user interaction and routing.
+  - Backend REST API in Express for business logic and data persistence.
+  - MongoDB for flexible document storage of hotels, rooms, users, and bookings.
+  - Authenticated access using JWT and role-based controls.
+  - Payment processing via Stripe or a payment service.
+  - Loyalty system to reward booking behavior.
+  - Separate manager/admin flows for hotel and room management.
+
+The frontend and backend communicate over HTTP JSON APIs. The frontend handles UI state, while the backend handles secure data validation, persistence, and business rules.
+
+This file provides a conceptual view of the entire project and highlights the main files, technologies, and runtime flow. If you need a deeper walkthrough of specific features such as loyalty rules, booking logic, or search implementation, I can add those next.

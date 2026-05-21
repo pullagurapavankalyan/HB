@@ -11,7 +11,7 @@ const loyaltyAccountSchema = new mongoose.Schema(
     },
     history: [
       {
-        transactionType: { type: String, enum: ['Earned', 'Redeemed'], required: true },
+        transactionType: { type: String, enum: ['Earned', 'Redeemed', 'Revoked'], required: true },
         pointsAmount: { type: Number, required: true },
         bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' },
         description: { type: String },

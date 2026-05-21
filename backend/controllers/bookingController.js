@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const Room = require('../models/Room');
 const Hotel = require('../models/Hotel');
 const asyncHandler = require('../middleware/asyncHandler');
+const LoyaltyAccount = require('../models/LoyaltyAccount');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 
 // @desc    Create a new booking (Uses MongoDB Transactions to prevent collision)
@@ -46,6 +47,7 @@ const createBooking = asyncHandler(async (req, res) => {
     }
 
     // 3. Create the booking document without any transaction sessions
+    const loyaltyPointsEarned = Math.floor(Number(totalAmount) / 100);
     const createdBooking = await Booking.create({
       userId: req.user?._id,
       hotelId,
@@ -57,6 +59,7 @@ const createBooking = asyncHandler(async (req, res) => {
         children: guests.children || 0
       },
       totalAmount,
+      loyaltyPointsEarned,
       bookingStatus: 'pending',
       paymentStatus: 'pending'
     });
@@ -160,6 +163,26 @@ const cancelBooking = asyncHandler(async (req, res) => {
     });
 
     console.log(`Booking cancellation complete for ${booking._id}`);
+
+    // Revoke star points if booking was paid and points were already awarded
+    try {
+      if (booking.paymentStatus === 'paid' && booking.loyaltyPointsEarned > 0) {
+        const account = await LoyaltyAccount.findOne({ userId: booking.userId });
+        if (account) {
+          const revokeAmount = Number(booking.loyaltyPointsEarned) || 0;
+          account.points = Math.max(0, (account.points || 0) - revokeAmount);
+          account.history.push({
+            transactionType: 'Revoked',
+            pointsAmount: -revokeAmount,
+            bookingId: booking._id,
+            description: 'Points revoked due to booking cancellation'
+          });
+          await account.save();
+        }
+      }
+    } catch (e) {
+      console.error('Failed to revoke loyalty points on cancellation:', e);
+    }
     successResponse(res, 200, 'Booking cancelled successfully', booking);
   } catch (error) {
     console.error('Error cancelling booking:', error);

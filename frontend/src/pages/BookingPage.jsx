@@ -5,6 +5,8 @@ import { createBooking, resetBookingState } from '../store/slices/bookingSlice';
 import BookingForm from '../components/booking/BookingForm';
 import ErrorMessage from '../components/ErrorMessage';
 
+const BACKEND_HOST = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
+
 const BookingPage = () => {
   const { hotelId, roomId } = useParams();
   const location = useLocation();
@@ -34,10 +36,24 @@ const BookingPage = () => {
 
   // Safe helper to extract room imagery url safely
   const getRoomImageUrl = () => {
-    const fallbackPlaceholder = 'https://placeholder.co/400x200?text=Room+Image';
+    const fallbackPlaceholder = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200">
+        <rect width="400" height="200" fill="#f1f3f5" />
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#adb5bd" font-family="Arial, sans-serif" font-size="18">No Image Available</text>
+      </svg>
+    `);
     const imgItem = room?.images?.[0];
     if (!imgItem) return fallbackPlaceholder;
-    return typeof imgItem === 'object' ? imgItem.url : imgItem;
+    if (typeof imgItem === 'object') {
+      if (imgItem.url?.startsWith('/')) {
+        return `${BACKEND_HOST}${imgItem.url}`;
+      }
+      return imgItem.url || fallbackPlaceholder;
+    }
+    if (typeof imgItem === 'string' && imgItem.startsWith('/')) {
+      return `${BACKEND_HOST}${imgItem}`;
+    }
+    return imgItem || fallbackPlaceholder;
   };
 
   const handleBookingSubmit = (bookingData) => {

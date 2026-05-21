@@ -21,8 +21,8 @@ const Navbar = () => {
     if (e && e.preventDefault) e.preventDefault();
     closeNavbar(); // Close menu on logout too
     dispatch(logout());
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
     try {
       await dispatch(logoutUser()).unwrap();
     } catch (error) {
@@ -80,12 +80,12 @@ const Navbar = () => {
                 {user?.role === 'User' && (
                   <>
                     <li className="nav-item">
-                      <Link className="nav-link" to="/my-bookings" onClick={closeNavbar}>My Bookings</Link>
+                      <Link className="nav-link" to="/my-bookings" onClick={closeNavbar}>Bookings</Link>
                     </li>
                     <li className="nav-item d-flex align-items-center">
                       <span className="nav-link text-warning d-flex align-items-center" style={{ whiteSpace: 'nowrap' }}>
-                        <i className="bi bi-star-fill me-1"></i>
-                        {account?.points ?? 0} pts
+                        <i className="bi bi-star-fill me-1 text-warning"></i>
+                         {account?.points ?? 0} pts
                       </span>
                     </li>
                   </>
@@ -127,7 +127,7 @@ const Navbar = () => {
                     {user?.name}
                   </a>
                   <ul className="dropdown-menu dropdown-menu-end shadow">
-                    <li><Link className="dropdown-item" to="/profile" onClick={closeNavbar}>My Profile</Link></li>
+                    <li><Link className="dropdown-item" to="/profile" onClick={closeNavbar}>Profile</Link></li>
                     {user?.role === 'User' && (
                       <li><Link className="dropdown-item" to="/wishlist" onClick={closeNavbar}>Wishlist</Link></li>
                     )}

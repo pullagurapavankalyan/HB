@@ -4,16 +4,28 @@ import { Link } from 'react-router-dom';
 const BACKEND_HOST = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
 
 const FeaturedHotelCard = ({ hotel }) => {
+  const imageUrl = (() => {
+    const firstImage = hotel.images?.[0];
+    if (!firstImage) return 'https://via.placeholder.com/800x400?text=Featured';
+    if (typeof firstImage === 'object') {
+      if (firstImage._id) {
+        return `${BACKEND_HOST}/api/hotels/${hotel._id}/images/${firstImage._id}`;
+      }
+      if (firstImage.url?.startsWith('/')) {
+        return `${BACKEND_HOST}${firstImage.url}`;
+      }
+      return firstImage.url || 'https://via.placeholder.com/800x400?text=Featured';
+    }
+    if (typeof firstImage === 'string') {
+      return firstImage.startsWith('/') ? `${BACKEND_HOST}${firstImage}` : firstImage;
+    }
+    return 'https://via.placeholder.com/800x400?text=Featured';
+  })();
   return (
-    <div className="card text-white border-0 shadow-lg overflow-hidden" style={{ borderRadius: '15px', height: '400px' }}>
+    <Link to={`/hotels/${hotel._id}`} className="text-decoration-none text-white">
+      <div className="card text-white border-0 shadow-lg overflow-hidden" style={{ borderRadius: '15px', height: '400px' }}>
       <img 
-        src={
-          hotel.images?.[0]?._id 
-            ? `${BACKEND_HOST}/api/hotels/${hotel._id}/images/${hotel.images[0]._id}`
-            : hotel.images?.[0]?.url?.startsWith('/')
-              ? `${BACKEND_HOST}${hotel.images[0].url}`
-              : hotel.images?.[0]?.url || 'https://placeholder.co/800x400?text=Featured'
-        } 
+        src={imageUrl}
         className="card-img h-100" 
         alt={hotel.hotelName} 
         style={{ objectFit: 'cover', filter: 'brightness(0.6)' }}
@@ -26,12 +38,11 @@ const FeaturedHotelCard = ({ hotel }) => {
           <div className="bg-primary text-white px-3 py-1 rounded me-3 fw-bold fs-5">
             <i className="bi bi-star-fill me-2"></i>{hotel.rating?.toFixed(1)}
           </div>
-          <Link to={`/hotels/${hotel._id}`} className="btn btn-light fw-bold px-4">
-            Explore Now
-          </Link>
+          <span className="btn btn-light fw-bold px-4">Explore Now</span>
         </div>
       </div>
     </div>
+    </Link>
   );
 };
 

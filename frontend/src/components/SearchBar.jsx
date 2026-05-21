@@ -8,9 +8,9 @@ const SearchBar = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (keyword.trim()) {
-      navigate(`/search?keyword=${encodeURIComponent(keyword)}`);
+      navigate(`/hotels?keyword=${encodeURIComponent(keyword)}`);
     } else {
-      navigate('/search');
+      navigate('/hotels');
     }
   };
 

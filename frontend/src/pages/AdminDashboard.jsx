@@ -73,7 +73,7 @@ export default function AdminDashboard() {
             <div className="card-body d-flex justify-content-between align-items-center p-2">
               <div>
                 <p className="text-uppercase text-muted fw-bold small mb-1" style={{ letterSpacing: '0.05em' }}>Total Revenue</p>
-                <h2 className="fw-bold text-dark m-0">₹{stats.totalRevenue}</h2>
+                <h2 className="fw-bold text-dark m-0">${stats.totalRevenue}</h2>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             </div>
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
                   style={{ height: heightPercent, transition: 'all 0.15s ease', cursor: 'pointer' }}
                   onMouseOver={(e) => e.currentTarget.classList.replace('bg-opacity-75', 'bg-opacity-100')}
                   onMouseOut={(e) => e.currentTarget.classList.replace('bg-opacity-100', 'bg-opacity-75')}
-                  title={`₹${data.amount}`}
+                  title={`$${data.amount}`}
                 />
                 <span className="fw-semibold text-secondary mt-2 text-center" style={{ fontSize: '0.55rem', lineHeight: '1' }}>{data.month}</span>
               </div>

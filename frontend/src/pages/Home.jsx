@@ -46,9 +46,15 @@ const Home = () => {
       {/* Promotional Section */}
       <section className="bg-light py-5">
         <div className="container text-center">
-          <h3 className="fw-bold mb-3">Earn Loyalty Points on Every Stay</h3>
-          <p className="text-muted mb-4">Collect points with every booking and unlock booking discounts.</p>
-          <a href="/register" className="btn btn-primary btn-lg fw-bold">Sign Up Now</a>
+          <h3 className="fw-bold mb-3">Earn Star Points on Every Stay</h3>
+          <p className="text-muted mb-4">Collect Star Points with every booking and unlock discounts.</p>
+          {
+            (useSelector(state => state.auth.isAuthenticated)) ? (
+              <a href="/hotels" className="btn btn-primary btn-lg fw-bold">Book Rooms</a>
+            ) : (
+              <a href="/login" className="btn btn-primary btn-lg fw-bold">Log In</a>
+            )
+          }
         </div>
       </section>
     </div>

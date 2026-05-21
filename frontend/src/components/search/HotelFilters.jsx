@@ -19,7 +19,7 @@ const HotelFilters = ({ onFilterApply, onClose }) => {
   };
 
   return (
-    <div className="card border-0 shadow-sm p-3 mb-4 w-100">
+    <div className="card border-0 shadow-sm p-3 mb-4">
       <h6 className="fw-bold mb-3">Filter By</h6>
       
       <div className="mb-3">

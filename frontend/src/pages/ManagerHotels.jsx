@@ -190,7 +190,9 @@ const ManagerHotels = () => {
               ? `${BACKEND_HOST}/api/hotels/${hotel._id}/images/${hotel.images[0]._id}`
               : hotel.images?.[0]?.url?.startsWith('/')
                 ? `${BACKEND_HOST}${hotel.images[0].url}`
-                : hotel.images?.[0]?.url || 'https://placeholder.co/500x300?text=Hotel+Image'
+                : hotel.images?.[0]?.startsWith('/')
+                  ? `${BACKEND_HOST}${hotel.images[0]}`
+                  : hotel.images?.[0]?.url || hotel.images?.[0] || 'https://via.placeholder.com/500x300?text=Hotel+Image'
           }
           className="card-img-top"
           alt={hotel.hotelName}

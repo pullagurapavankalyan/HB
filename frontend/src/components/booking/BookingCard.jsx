@@ -19,49 +19,57 @@ const BookingCard = ({ booking, onCancel, isCancelling }) => {
         {getStatusBadge(booking.bookingStatus)}
       </div>
       <div className="card-body">
-        <div className="row">
-          <div className="col-md-8">
-            <h4 className="fw-bold text-primary">{booking.hotelId?.hotelName}</h4>
-            <p className="text-muted mb-2"><i className="bi bi-geo-alt me-2"></i>{booking.hotelId?.city}</p>
-            {booking.hotelId?.locationLink && (
-              <p className="mb-2">
-                <a href={booking.hotelId.locationLink} target="_blank" rel="noopener noreferrer" className="text-decoration-none">
-                  <i className="bi bi-box-arrow-up-right me-1"></i>View location
-                </a>
-              </p>
-            )}
-            {booking.hotelId?.managerId?.name && (
-              <p className="mb-0 text-muted small">
-                Managed by {booking.hotelId.managerId.name}
-                {booking.hotelId.managerId.email ? ` • ${booking.hotelId.managerId.email}` : ''}
-              </p>
-            )}
-            <hr className="my-2" />
-            <div className="row mt-3">
-              <div className="col-sm-6">
-                <p className="mb-1 text-muted small">Check-in</p>
-                <p className="fw-semibold">{new Date(booking.checkInDate).toLocaleDateString()}</p>
+        <div className="row gx-3">
+          <div className="col-12 col-md-8">
+            <div className="row gx-3">
+              <div className="col-6 mt-3">
+                <h4 className="fw-bold text-primary">{booking.hotelId?.hotelName}</h4>
+                <p className="text-muted mb-2"><i className="bi bi-geo-alt me-2"></i>{booking.hotelId?.city}</p>
+                {booking.hotelId?.locationLink && (
+                  <p className="mb-2">
+                    <a href={booking.hotelId.locationLink} target="_blank" rel="noopener noreferrer" className="text-decoration-none">
+                      <i className="bi bi-box-arrow-up-right me-1"></i>View location
+                    </a>
+                  </p>
+                )}
               </div>
-              <div className="col-sm-6">
-                <p className="mb-1 text-muted small">Check-out</p>
-                <p className="fw-semibold">{new Date(booking.checkOutDate).toLocaleDateString()}</p>
+              <div className="col-6">
+                <div className="mb-3">
+                  <p className="mb-1 text-muted small">Check-in</p>
+                  <p className="fw-semibold">{new Date(booking.checkInDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="mb-1 text-muted small">Check-out</p>
+                  <p className="fw-semibold">{new Date(booking.checkOutDate).toLocaleDateString()}</p>
+                </div>
               </div>
             </div>
-            <p className="mb-0">
-              <i className="bi bi-people me-2 text-muted"></i>
-              {booking.guests?.adults || 0} Adults
-              {booking.guests?.children > 0 && `, ${booking.guests.children} ${booking.guests.children === 1 ? 'Child' : 'Children'}`}
-            </p>
+              <div className="row mt-3 align-items-center">
+                <div className="col-6">
+                  <p className="mb-0">
+                    <i className="bi bi-people me-2 text-muted"></i>
+                    {booking.guests?.adults || 0} Adults
+                    {booking.guests?.children > 0 && `, ${booking.guests.children} ${booking.guests.children === 1 ? 'Child' : 'Children'}`}
+                  </p>
+                </div>
+                <div className="col-6 d-md-none">
+                  <div className="bg-light rounded-3 p-3">
+                    <p className="text-muted small mb-1">Total Amount</p>
+                    <h5 className="fw-bold mb-1">₹{booking.totalAmount}</h5>
+                    <p className="small text-muted mb-0">Payment: <span className="fw-semibold">{booking.paymentStatus.toUpperCase()}</span></p>
+                  </div>
+                </div>
+              </div>
           </div>
-          <div className="col-md-4 d-flex flex-column justify-content-center align-items-end border-start mt-3 mt-md-0">
+          <div className="col-12 col-md-4 d-none d-md-flex flex-column justify-content-center align-items-end border-start mt-3 mt-md-0">
             <p className="text-muted mb-1">Total Amount</p>
             <h2 className="fw-bold text-success">₹{booking.totalAmount}</h2>
             <p className="small text-muted mb-3">Payment: <span className="fw-semibold">{booking.paymentStatus.toUpperCase()}</span></p>
-            
+
             {booking.bookingStatus === 'pending' && booking.paymentStatus === 'pending' && (
               <Link to={`/payment/${booking._id}`} className="btn btn-primary w-100 mb-2">Pay Now</Link>
             )}
-            
+
             {(booking.bookingStatus === 'pending' || booking.bookingStatus === 'confirmed') && (
               <button
                 className="btn btn-outline-danger w-100"

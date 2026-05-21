@@ -127,18 +127,10 @@ const HotelDetails = () => {
   return (
     <div className="container py-5">
       {/* Header Info Section */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <h1 className="fw-bold display-5">{hotel.hotelName || 'Unnamed Hotel'}</h1>
-          <p className="text-muted fs-5">
-            <i className="bi bi-geo-alt-fill text-primary me-2"></i>
-            {hotel.city || 'Unknown City'}, {hotel.country || 'Unknown Country'}
-          </p>
-        </div>
-      </div>
+      
 
       {/* Grid Image Gallery layout - responsive for all screen sizes */}
-      <div className="mb-5">
+      <div className="mb-1">
         {/* Main Image - Full width on all screens */}
         <div className="mb-3">
           <img 
@@ -164,21 +156,25 @@ const HotelDetails = () => {
             style={{ height: '120px', minWidth: '120px', objectFit: 'cover' }} 
           />
         </div>
+
+        <div className="row mb-4">
+          <div className="col-12">
+            <h1 className="fw-bold display-5">{hotel.hotelName || 'Unnamed Hotel'}</h1>
+            <p className="text-muted fs-5">
+              <i className="bi bi-geo-alt-fill text-primary me-2"></i>
+              {hotel.city || 'Unknown City'}, {hotel.country || 'Unknown Country'}
+            </p>
+          </div>
+        </div>
+
       </div>
 
       <div className="row">
         {/* Core Left Columns Content Details */}
         <div className="col-lg-8">
           
-          {/* Description Block */}
-          <h3 className="fw-bold mb-3">About this hotel</h3>
-          <p className="text-muted mb-5" style={{ lineHeight: '1.8' }}>
-            {hotel.description || 'No descriptive summary available for this property.'}
-          </p>
-
           {/* Amenities Map Processing Block */}
-          <h3 className="fw-bold mb-3">Popular Amenities</h3>
-          <div className="d-flex flex-wrap gap-2 mb-5">
+          <div className="d-flex flex-wrap gap-2 mb-3">
             {!hotel.amenities || hotel.amenities.length === 0 ? (
               <p className="text-muted fs-6">Contact the front desk for available amenity lists.</p>
             ) : (
@@ -191,8 +187,16 @@ const HotelDetails = () => {
             )}
           </div>
 
+          {/* Description Block */}
+          <h3 className="fw-bold mb-3">About {hotel.hotelName || 'the hotel'}</h3>
+          <p className="text-muted mb-3" style={{ lineHeight: '1.8' }}>
+            {hotel.description || 'No descriptive summary available for this property.'}
+          </p>
+
+          
+
           {/* Available Rooms Conditional Loop Handling */}
-          <h3 className="fw-bold mb-3">Available Rooms</h3>
+          <h3 className="fw-bold mb-3">Rooms</h3>
           {!hotel.rooms || hotel.rooms.length === 0 ? (
             <div className="alert alert-info border-0 shadow-sm p-4">
               <p className="text-muted mb-0 fw-semibold">No rooms currently available matching this timeline view.</p>
@@ -249,7 +253,7 @@ const HotelDetails = () => {
         <div className="col-lg-8">
           <div className="card shadow-sm border-0 mb-4">
             <div className="card-body">
-              <h3 className="fw-bold mb-3">Guest Reviews</h3>
+              <h3 className="fw-bold mb-3">Reviews</h3>
               {hotel.reviews && hotel.reviews.length > 0 ? (
                 <div className="list-group">
                   {hotel.reviews.map((review) => (
@@ -264,7 +268,7 @@ const HotelDetails = () => {
                       <p className="mt-3 mb-1">{review.comment}</p>
                       {review.reply?.message && (
                         <div className="border rounded-3 bg-light p-3 mt-3">
-                          <strong className="d-block mb-1">Manager Reply</strong>
+                          <strong className="d-block mb-1">{hotel.hotelName || 'the hotel'}</strong>
                           <p className="mb-1 small">{review.reply.message}</p>
                           <small className="text-muted">{review.reply.repliedAt ? new Date(review.reply.repliedAt).toLocaleDateString() : ''}</small>
                         </div>
