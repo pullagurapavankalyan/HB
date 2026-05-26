@@ -3,8 +3,6 @@ const validateEnv = () => {
     'MONGO_URI',
     'JWT_SECRET',
     'JWT_REFRESH_SECRET',
-    'STRIPE_SECRET_KEY',
-    'STRIPE_WEBHOOK_SECRET',
     'CLOUDINARY_URL',
   ];
 

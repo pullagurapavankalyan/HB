@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import FormInput from '../shared/FormInput';
 import CustomButton from '../shared/CustomButton';
 
 const BookingForm = ({ room, onSubmit, loading }) => {
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
+  const [checkIn, setCheckIn] = useState(null);
+  const [checkOut, setCheckOut] = useState(null);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
 
@@ -20,12 +22,16 @@ const BookingForm = ({ room, onSubmit, loading }) => {
 
   const handleBook = (e) => {
     e.preventDefault();
-    if (new Date(checkIn) >= new Date(checkOut)) {
+    if (!checkIn || !checkOut) {
+      alert('Please select both check-in and check-out dates.');
+      return;
+    }
+    if (checkIn >= checkOut) {
       alert('Check-out date must be after Check-in date.');
       return;
     }
     const totalAmount = calculateTotal();
-    onSubmit({ checkInDate: checkIn, checkOutDate: checkOut, guests: { adults: parseInt(adults), children: parseInt(children) }, totalAmount });
+    onSubmit({ checkInDate: checkIn.toISOString(), checkOutDate: checkOut.toISOString(), guests: { adults: parseInt(adults), children: parseInt(children) }, totalAmount });
   };
 
   const total = calculateTotal();
@@ -34,22 +40,14 @@ const BookingForm = ({ room, onSubmit, loading }) => {
     <div className="card shadow-sm border-0 p-4">
       <h4 className="fw-bold mb-4">Book {room.roomType}</h4>
       <form onSubmit={handleBook}>
-        <FormInput 
-          label="Check-in Date" 
-          type="date" 
-          id="checkIn" 
-          value={checkIn} 
-          onChange={(e) => setCheckIn(e.target.value)} 
-          required 
-        />
-        <FormInput 
-          label="Check-out Date" 
-          type="date" 
-          id="checkOut" 
-          value={checkOut} 
-          onChange={(e) => setCheckOut(e.target.value)} 
-          required 
-        />
+        <div className="mb-3 text-start">
+          <label className="form-label fw-semibold">Check-in Date <span className="text-danger">*</span></label>
+          <DatePicker selected={checkIn} onChange={(date) => setCheckIn(date)} className="form-control" placeholderText="Select check-in" />
+        </div>
+        <div className="mb-3 text-start">
+          <label className="form-label fw-semibold">Check-out Date <span className="text-danger">*</span></label>
+          <DatePicker selected={checkOut} onChange={(date) => setCheckOut(date)} className="form-control" placeholderText="Select check-out" />
+        </div>
         <div className="row">
           <div className="col-md-6">
             <FormInput 

@@ -75,12 +75,6 @@ const adminRoutes = require('./routes/adminRoutes');
 // Prevent XSS attacks
 app.use(xss());
 
-// ** Stripe Webhook MUST be before express.json() **
-// We already defined it in paymentRoutes.js but for Stripe to verify the signature, it needs the raw body.
-// So we apply it here directly, and paymentRoutes handles the rest.
-const { stripeWebhook } = require('./controllers/paymentController');
-app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
-
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Select from 'react-select';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchHotelDetails, clearHotelDetails } from '../store/slices/hotelSlice';
@@ -294,14 +295,19 @@ const HotelDetails = () => {
                     {reviewSuccess && <div className="alert alert-success">{reviewSuccess}</div>}
                     <div className="mb-3">
                       <label className="form-label">Rating</label>
-                      <select name="rating" value={reviewForm.rating} onChange={handleReviewChange} className="form-select" required>
-                        <option value={0}>Select rating</option>
-                        <option value={1}>1 - Poor</option>
-                        <option value={2}>2 - Fair</option>
-                        <option value={3}>3 - Good</option>
-                        <option value={4}>4 - Very good</option>
-                        <option value={5}>5 - Excellent</option>
-                      </select>
+                      <Select
+                        options={[
+                          { value: 0, label: 'Select rating' },
+                          { value: 1, label: '1 - Poor' },
+                          { value: 2, label: '2 - Fair' },
+                          { value: 3, label: '3 - Good' },
+                          { value: 4, label: '4 - Very good' },
+                          { value: 5, label: '5 - Excellent' }
+                        ]}
+                        value={{ value: Number(reviewForm.rating), label: reviewForm.rating ? `${reviewForm.rating} - ${['','Poor','Fair','Good','Very good','Excellent'][reviewForm.rating]}` : 'Select rating' }}
+                        onChange={(opt) => setReviewForm((prev) => ({ ...prev, rating: opt.value }))}
+                        isSearchable={false}
+                      />
                     </div>
                     <div className="mb-3">
                       <label className="form-label">Comment</label>

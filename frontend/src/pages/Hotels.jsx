@@ -49,7 +49,7 @@ const Hotels = () => {
       <div className="row mb-3 align-items-center">
         <div className="col-6 col-md-6">
           <h2 className="fw-bold mb-3 fs-5 fs-md-4">
-            {keywordParams ? `Search Results for "${keywordParams}"` : 'Explore Hotels'}
+            {keywordParams ? `Search Results for "${keywordParams}"` : 'Hotels'}
           </h2>
         </div>
         <div className="col-6 col-md-6 d-flex justify-content-end justify-content-md-end gap-2 mt-2 mt-md-0">

@@ -1,64 +1,59 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
-import { createPaymentIntent, resetPayment } from '../store/slices/paymentSlice';
-import { fetchLoyalty } from '../store/slices/loyaltySlice';
+import api from '../api/axios';
 import PaymentForm from '../components/payment/PaymentForm';
 import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
 
-// Initialize stripe cleanly. 
-const STRIPE_PUBLIC_KEY = 'pk_test_your_actual_stripe_publishable_key_here';
-
-// If running a placeholder dummy key, generate an empty object state instead of invoking the real SDK constructor
-const stripePromise = STRIPE_PUBLIC_KEY.startsWith('pk_') 
-  ? loadStripe(STRIPE_PUBLIC_KEY) 
-  : Promise.resolve({
-      elements: () => null,
-      createToken: () => Promise.resolve({ token: null }),
-      confirmCardPayment: () => Promise.resolve({ paymentIntent: { status: 'succeeded' } })
-    });
 
 const PaymentPage = () => {
   const { bookingId } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
 
-  const { clientSecret, loading, error } = useSelector(state => state.payment);
+  const [booking, setBooking] = useState(null);
+  const [loyaltyAccount, setLoyaltyAccount] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (bookingId) {
-      dispatch(createPaymentIntent(bookingId));
-    }
-    return () => {
-      dispatch(resetPayment());
+    const loadBookingAndLoyalty = async () => {
+      try {
+        const [bookingRes, loyaltyRes] = await Promise.all([
+          api.get(`/bookings/${bookingId}`),
+          api.get('/loyalty')
+        ]);
+        setBooking(bookingRes.data.data);
+        setLoyaltyAccount(loyaltyRes.data.data);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Unable to load payment details.');
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [dispatch, bookingId]);
+
+    if (bookingId) {
+      loadBookingAndLoyalty();
+    }
+  }, [bookingId]);
 
   const handlePaymentSuccess = async () => {
-      await dispatch(fetchLoyalty()).unwrap().catch(() => {});
-      navigate(`/booking-success/${bookingId}`);
-    };
+    navigate(`/booking-success/${bookingId}`);
+  };
 
-  if (loading && !clientSecret) return <Loader fullscreen />;
+  if (loading) return <Loader fullscreen />;
+
+  if (error) return <ErrorMessage message={error} />;
+
+  if (!booking) return <ErrorMessage message="Booking not found." />;
 
   return (
     <div className="container py-5">
-      {error && <ErrorMessage message={error} />}
-      {clientSecret ? (
-        // Always wrap with Elements to satisfy internal useStripe hook compilation
-        <Elements stripe={stripePromise}>
-          <PaymentForm 
-            clientSecret={clientSecret} 
-            bookingId={bookingId} 
-            onPaymentSuccess={handlePaymentSuccess} 
-          />
-        </Elements>
-      ) : (
-        <ErrorMessage message="Unable to initialize payment session. Please try again later." />
-      )}
+      <PaymentForm
+        booking={booking}
+        loyaltyAccount={loyaltyAccount}
+        bookingId={bookingId}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };

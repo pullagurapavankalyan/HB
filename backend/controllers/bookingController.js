@@ -59,6 +59,7 @@ const createBooking = asyncHandler(async (req, res) => {
         children: guests.children || 0
       },
       totalAmount,
+      originalAmount: totalAmount,
       loyaltyPointsEarned,
       bookingStatus: 'pending',
       paymentStatus: 'pending'

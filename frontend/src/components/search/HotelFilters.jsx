@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Select from 'react-select';
 
 const HotelFilters = ({ onFilterApply, onClose }) => {
   const [minRating, setMinRating] = useState('');
@@ -24,12 +25,17 @@ const HotelFilters = ({ onFilterApply, onClose }) => {
       
       <div className="mb-3">
         <label className="form-label text-muted small fw-semibold">Minimum Rating</label>
-        <select className="form-select" value={minRating} onChange={(e) => setMinRating(e.target.value)}>
-          <option value="">Any Rating</option>
-          <option value="4">4 Stars & Up</option>
-          <option value="3">3 Stars & Up</option>
-          <option value="2">2 Stars & Up</option>
-        </select>
+        <Select
+          options={[
+            { value: '', label: 'Any Rating' },
+            { value: '4', label: '4 Stars & Up' },
+            { value: '3', label: '3 Stars & Up' },
+            { value: '2', label: '2 Stars & Up' }
+          ]}
+          value={minRating ? { value: minRating, label: `${minRating} Stars & Up` } : { value: '', label: 'Any Rating' }}
+          onChange={(opt) => setMinRating(opt?.value || '')}
+          isSearchable={false}
+        />
       </div>
 
       <div className="mb-4">

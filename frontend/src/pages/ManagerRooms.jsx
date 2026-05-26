@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 import { useSelector } from 'react-redux';
 import api from '../api/axios';
 import Loader from '../components/Loader';
@@ -86,7 +87,7 @@ const ManagerRooms = () => {
         hotelId: formData.hotelId,
         roomNumber: formData.roomNumber,
         roomType: formData.roomType,
-        pricePerNight: Number(formData.price), // Updated to match backend variable expectations
+        price: Number(formData.price), // backend expects `price`
         quantity: Number(formData.quantity),
         capacity: { adults: Number(formData.adults), children: Number(formData.children) },
         amenities: formData.amenities.split(',').map(a => a.trim()).filter(Boolean),
@@ -208,11 +209,12 @@ const ManagerRooms = () => {
               <div className="row g-3">
                 <div className="col-md-6">
                   <label className="form-label">Select Hotel</label>
-                  <select className="form-select" name="hotelId" value={formData.hotelId} onChange={handleChange} required>
-                    {hotels.map(h => (
-                      <option key={h._id} value={h._id}>{h.hotelName} — {h.city}</option>
-                    ))}
-                  </select>
+                  <Select
+                    options={hotels.map(h => ({ value: h._id, label: `${h.hotelName} — ${h.city}` }))}
+                    value={hotels.find(h => h._id === formData.hotelId) ? { value: formData.hotelId, label: hotels.find(h => h._id === formData.hotelId).hotelName + ' — ' + hotels.find(h => h._id === formData.hotelId).city } : null}
+                    onChange={(opt) => { setFormData({ ...formData, hotelId: opt?.value || '' }); if (opt?.value) loadRooms(opt.value); }}
+                    isSearchable
+                  />
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">Room Number</label>

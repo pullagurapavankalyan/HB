@@ -35,7 +35,7 @@ backend/server.js
 backend/config/db.js
   - Contains MongoDB connection logic using Mongoose.
   - Responsible for connecting to the database and handling connection errors.
-
+ 
 backend/routes/
   - Contains Express route definitions organized by feature.
   - Example route files:

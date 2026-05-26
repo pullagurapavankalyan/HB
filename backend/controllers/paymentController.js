@@ -1,156 +1,125 @@
-const Stripe = require('stripe');
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
+const LoyaltyAccount = require('../models/LoyaltyAccount');
 const { calculateLoyaltyPoints, upgradeTierIfNeeded } = require('../services/loyaltyService');
 const asyncHandler = require('../middleware/asyncHandler');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 
-// @desc    Create Payment Intent
-// @route   POST /api/payments/create-intent
+// @desc    Process Card Payment
+// @route   POST /api/payments/process
 // @access  Private
-const createPaymentIntent = asyncHandler(async (req, res) => {
-  const { bookingId } = req.body;
+const processPayment = asyncHandler(async (req, res) => {
+  const { bookingId, pointsToRedeem = 0, cardHolderName, cardNumber, expiryMonth, expiryYear, cvc } = req.body;
+  const normalizedCardNumber = String(cardNumber || '').replace(/\s+/g, '');
+  const normalizedName = String(cardHolderName || '').trim();
+  const expiryMonthNum = Number(expiryMonth);
+  let expiryYearNum = Number(expiryYear);
 
+  if (!bookingId || !normalizedName || !normalizedCardNumber || !expiryMonth || !expiryYear || !cvc) {
+    return errorResponse(res, 400, 'Please provide booking, card and expiry details.');
+  }
+
+  if (!/^\d{12,19}$/.test(normalizedCardNumber)) {
+    return errorResponse(res, 400, 'Please enter a valid card number.');
+  }
+
+  if (!/^(0[1-9]|1[0-2])$/.test(String(expiryMonthNum).padStart(2, '0'))) {
+    return errorResponse(res, 400, 'Expiry month must be between 01 and 12.');
+  }
+
+  if (!/^[0-9]{2,4}$/.test(String(expiryYearNum))) {
+    return errorResponse(res, 400, 'Expiry year must be in YY or YYYY format.');
+  }
+
+  if (expiryYearNum < 100) expiryYearNum += 2000;
+
+  const current = new Date();
+  const expiryDate = new Date(expiryYearNum, expiryMonthNum - 1, 1);
+  if (expiryDate < new Date(current.getFullYear(), current.getMonth(), 1)) {
+    return errorResponse(res, 400, 'Card expiry must be in the future.');
+  }
+
+  if (!/^\d{3,4}$/.test(String(cvc))) {
+    return errorResponse(res, 400, 'CVC must be 3 or 4 digits.');
+  }
+
+  const pointsToRedeemNum = Number(pointsToRedeem || 0);
   const booking = await Booking.findById(bookingId);
   if (!booking) return errorResponse(res, 404, 'Booking not found');
   if (booking.paymentStatus === 'paid') return errorResponse(res, 400, 'Booking is already paid');
 
-  // Amount in cents for Stripe
-  const amountCents = Math.round(booking.totalAmount * 100);
+  const baseAmount = booking.originalAmount || booking.totalAmount;
+  let discountedAmount = Math.round(baseAmount * 100) / 100;
+  let discountPercent = (booking.loyaltyPointsRedeemed || 0) / 10 * 7;
+  const totalRedeemedPoints = (booking.loyaltyPointsRedeemed || 0) + pointsToRedeemNum;
 
-  let paymentIntent;
-  
-  // Check if using dummy Stripe key (local development)
-  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.includes('dummy')) {
-    // Mock payment intent for development
-    paymentIntent = {
-      id: `pi_test_${Date.now()}`,
-      client_secret: `pi_test_${Date.now()}_secret_${Math.random().toString(36).substr(2, 9)}`,
-      amount: amountCents,
-      currency: 'inr',
-      status: 'requires_payment_method'
-    };
-    console.log('⚠️  Using mock Stripe payment intent (development mode)');
-  } else {
-    // Real Stripe payment intent
-    paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
-      currency: 'inr',
-      metadata: { bookingId: booking._id.toString() }
-    });
+  if (pointsToRedeemNum > 0) {
+    if (!Number.isInteger(pointsToRedeemNum) || pointsToRedeemNum <= 0 || pointsToRedeemNum % 10 !== 0) {
+      return errorResponse(res, 400, 'Points must be redeemed in multiples of 10');
+    }
+
+    const account = await LoyaltyAccount.findOne({ userId: req.user._id });
+    if (!account || account.points < pointsToRedeemNum) {
+      return errorResponse(res, 400, 'Insufficient star points');
+    }
+    discountPercent = (totalRedeemedPoints / 10) * 7;
+    discountedAmount = Math.max(Math.round((baseAmount * (1 - discountPercent / 100)) * 100) / 100, 0);
   }
 
-  // Create initial payment log
-  await Payment.create({
+  const payment = await Payment.create({
     bookingId: booking._id,
     userId: req.user._id,
-    paymentGateway: 'Stripe',
-    paymentId: paymentIntent.id,
-    amount: booking.totalAmount,
-    transactionStatus: 'pending'
+    paymentGateway: 'Card',
+    paymentId: `card_${Date.now()}`,
+    amount: discountedAmount,
+    pointsRedeemed: pointsToRedeemNum,
+    transactionStatus: 'succeeded',
+    currency: 'INR',
+    cardLast4: normalizedCardNumber.slice(-4),
   });
 
-  successResponse(res, 200, 'Payment intent created', {
-    clientSecret: paymentIntent.client_secret,
-  });
-});
+  const confirmedBooking = await processSuccessfulPayment(payment, bookingId);
 
-// @desc    Stripe Webhook (Verify payment asynchronously)
-// @route   POST /api/payments/webhook
-// @access  Public
-const stripeWebhook = asyncHandler(async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    console.error(`Webhook Error: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // Handle the event
-  if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object;
-    const bookingId = paymentIntent.metadata.bookingId;
-
-    // Update payment record and only distribute points once
-    const payment = await Payment.findOne({ paymentId: paymentIntent.id });
-    if (payment && payment.transactionStatus !== 'succeeded') {
-      await Payment.findByIdAndUpdate(payment._id, { transactionStatus: 'succeeded', webhookVerified: true });
-
-      // Update booking status
-      const booking = await Booking.findByIdAndUpdate(bookingId, {
-        paymentStatus: 'paid',
-        bookingStatus: 'confirmed'
-      }, { new: true });
-
-      if (booking && booking.loyaltyPointsEarned > 0) {
-        await calculateLoyaltyPoints(booking.userId, booking.loyaltyPointsEarned, booking._id);
-        await upgradeTierIfNeeded(booking.userId);
-      }
-    }
-
-    // Update booking status
-    const booking = await Booking.findByIdAndUpdate(bookingId, {
-      paymentStatus: 'paid',
-      bookingStatus: 'confirmed'
-    }, { new: true });
-
-    if (booking && booking.loyaltyPointsEarned > 0) {
-      await calculateLoyaltyPoints(booking.userId, booking.loyaltyPointsEarned, booking._id);
-      await upgradeTierIfNeeded(booking.userId);
-    }
-
-    console.log(`Payment confirmed for Booking: ${bookingId}`);
-  }
-
-  res.send({ received: true });
-});
-
-// @desc    Confirm Payment (for development/testing)
-// @route   POST /api/payments/confirm
-// @access  Private
-const confirmPayment = asyncHandler(async (req, res) => {
-  const { bookingId, paymentId } = req.body;
-
-  if (!bookingId || !paymentId) {
-    return errorResponse(res, 400, 'bookingId and paymentId are required');
-  }
-
-  // Update payment record
-  const payment = await Payment.findOne({ paymentId });
-  if (!payment) {
-    return errorResponse(res, 404, 'Payment not found');
-  }
-
-  if (payment.transactionStatus === 'succeeded') {
-    const booking = await Booking.findById(bookingId);
-    return successResponse(res, 200, 'Payment already confirmed', { booking, payment });
-  }
-
-  await Payment.findByIdAndUpdate(payment._id, { transactionStatus: 'succeeded', webhookVerified: true });
-
-  // Update booking status
-  const confirmedBooking = await Booking.findByIdAndUpdate(
-    bookingId,
-    {
-      paymentStatus: 'paid',
-      bookingStatus: 'confirmed'
-    },
-    { new: true }
-  );
-
-  if (confirmedBooking && confirmedBooking.loyaltyPointsEarned > 0) {
-    await calculateLoyaltyPoints(confirmedBooking.userId, confirmedBooking.loyaltyPointsEarned, confirmedBooking._id);
-    await upgradeTierIfNeeded(confirmedBooking.userId);
-  }
-
-  successResponse(res, 200, 'Payment confirmed successfully', {
+  successResponse(res, 200, 'Payment processed successfully', {
     booking: confirmedBooking,
-    payment
+    payment,
   });
 });
 
-module.exports = { createPaymentIntent, stripeWebhook, confirmPayment };
+const processSuccessfulPayment = async (payment, bookingId) => {
+  const booking = await Booking.findById(bookingId);
+  if (!booking) return null;
+
+  const pointsRedeemed = payment.pointsRedeemed || 0;
+  const baseAmount = booking.originalAmount || booking.totalAmount;
+  if (!booking.originalAmount) booking.originalAmount = booking.totalAmount;
+
+  if (pointsRedeemed > 0) {
+    const discountPercent = (pointsRedeemed / 10) * 7;
+    booking.totalAmount = Math.max(Math.round((baseAmount * (1 - discountPercent / 100)) * 100) / 100, 0);
+    booking.loyaltyPointsRedeemed = pointsRedeemed;
+    const account = await LoyaltyAccount.findOne({ userId: booking.userId });
+    if (account) {
+      account.points = Math.max(0, account.points - pointsRedeemed);
+      account.history.push({
+        transactionType: 'Redeemed',
+        pointsAmount: -pointsRedeemed,
+        bookingId: booking._id,
+        description: 'Redeemed for booking payment'
+      });
+      await account.save();
+    }
+  }
+
+  booking.paymentStatus = 'paid';
+  booking.bookingStatus = 'confirmed';
+  await booking.save();
+
+  if (booking.loyaltyPointsEarned > 0) {
+    await calculateLoyaltyPoints(booking.userId, booking.loyaltyPointsEarned, booking._id);
+    await upgradeTierIfNeeded(booking.userId);
+  }
+
+  return booking;
+};
+module.exports = { processPayment };

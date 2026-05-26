@@ -78,7 +78,7 @@ const login = asyncHandler(async (req, res) => {
 // @access  Public
 const logout = asyncHandler(async (req, res) => {
   clearTokenCookie(res);
-  if (req.user) {
+  if (req.user) { 
     req.user.refreshToken = '';
     await req.user.save();
   }
@@ -106,5 +106,5 @@ const refreshToken = asyncHandler(async (req, res) => {
     return errorResponse(res, 403, 'Refresh token expired or invalid');
   }
 });
-
 module.exports = { register, login, logout, refreshToken };
+

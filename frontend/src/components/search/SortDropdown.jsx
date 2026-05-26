@@ -1,20 +1,27 @@
 import React from 'react';
+import Select from 'react-select';
 
 const SortDropdown = ({ sortBy, onSortChange }) => {
+  const options = [
+    { value: 'recommended', label: 'Recommended' },
+    { value: 'price_asc', label: 'Price (Low to High)' },
+    { value: 'price_desc', label: 'Price (High to Low)' },
+    { value: 'rating_desc', label: 'Top Rated' }
+  ];
+
+  const selected = options.find(o => o.value === sortBy) || options[0];
+
   return (
     <div className="d-flex flex-wrap align-items-center gap-2">
       <span className="text-muted me-2 small fw-semibold">Sort By:</span>
-      <select 
-        className="form-select form-select-sm border-0 bg-light" 
-        value={sortBy} 
-        onChange={(e) => onSortChange(e.target.value)}
-        style={{ cursor: 'pointer', outline: 'none', boxShadow: 'none' }}
-      >
-        <option value="recommended">Recommended</option>
-        <option value="price_asc">Price (Low to High)</option>
-        <option value="price_desc">Price (High to Low)</option>
-        <option value="rating_desc">Top Rated</option>
-      </select>
+      <div style={{ minWidth: 220 }}>
+        <Select
+          options={options}
+          value={selected}
+          onChange={(opt) => onSortChange(opt.value)}
+          isSearchable={false}
+        />
+      </div>
     </div>
   );
 };

@@ -48,10 +48,13 @@ const redeemPoints = asyncHandler(async (req, res) => {
         return errorResponse(res, 400, 'Cannot redeem points after payment has been completed');
       }
 
-      const discountPercent = (pointsValue / 10) * 5;
-      const discountedAmount = Math.round(booking.totalAmount * (1 - discountPercent / 100));
+      const totalRedeemedPoints = (booking.loyaltyPointsRedeemed || 0) + pointsValue;
+      const discountPercent = (totalRedeemedPoints / 10) * 7;
+      const baseAmount = booking.originalAmount || booking.totalAmount;
+      booking.originalAmount = booking.originalAmount || booking.totalAmount;
+      const discountedAmount = Math.max(Math.round((baseAmount * (1 - discountPercent / 100)) * 100) / 100, 0);
       booking.totalAmount = Math.max(discountedAmount, 0);
-        booking.loyaltyPointsRedeemed = (booking.loyaltyPointsRedeemed || 0) + pointsValue;
+      booking.loyaltyPointsRedeemed = totalRedeemedPoints;
       await booking.save();
     }
   }

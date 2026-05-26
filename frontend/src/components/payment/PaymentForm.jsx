@@ -1,41 +1,55 @@
 import React, { useState } from 'react';
 import api from '../../api/axios';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import CustomButton from '../shared/CustomButton';
 import ErrorMessage from '../ErrorMessage';
 
-// --- SUB-COMPONENT: ONLY MOUNTS IN REAL PRODUCTION ENGINE MODE ---
-const StripeCardInput = () => {
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#495057',
-        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-        '::placeholder': { color: '#adb5bd' },
-      },
-      invalid: { color: '#dc3545', iconColor: '#dc3545' },
-    },
-    hidePostalCode: true,
-  };
-
-  return (
-    <div className="py-2" style={{ minHeight: '40px' }}>
-      <CardElement options={cardElementOptions} />
-    </div>
-  );
-};
-
-// --- MAIN PORTAL CONTROLLER ---
-const PaymentForm = ({ clientSecret, onPaymentSuccess, bookingId }) => {
-  // Safe extraction lookup: only run Stripe hook values inside real ecosystem scopes
-  const stripe = useStripe();
-  const elements = useElements();
-  
+const PaymentForm = ({ booking, loyaltyAccount, bookingId, onPaymentSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [cardHolderName, setCardHolderName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvc, setCvc] = useState('');
+    const isDevelopmentMock = import.meta.env.MODE === 'development';
 
-  const isDevelopmentMock = clientSecret && clientSecret.startsWith('pi_test_');
+  const availablePoints = loyaltyAccount?.points || 0;
+  const redeemedPoints = booking?.loyaltyPointsRedeemed || 0;
+  const totalRedeemPoints = redeemedPoints + (Number.isInteger(pointsToRedeem) ? pointsToRedeem : 0);
+  const discountPercent = (totalRedeemPoints / 10) * 7;
+  const roundedDiscount = Math.min(100, discountPercent);
+  const baseAmount = booking?.originalAmount ?? booking?.totalAmount ?? 0;
+  const discountedAmount = Math.max(Math.round((baseAmount * (1 - roundedDiscount / 100)) * 100) / 100, 0);
+
+  const formatCardNumber = (value) => {
+    return value.replace(/\D/g, '').slice(0, 19);
+  };
+
+  const formatExpiry = (value) => {
+    const cleaned = value.replace(/[^0-9]/g, '').slice(0, 4);
+    if (cleaned.length >= 3) {
+      return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+    }
+    return cleaned;
+  };
+
+  const validateCardFields = () => {
+    const normalizedNumber = cardNumber.replace(/\D/g, '');
+    if (!cardHolderName.trim()) return 'Cardholder name is required.';
+    if (!/^\d{12,19}$/.test(normalizedNumber)) return 'Card number must contain 12 to 19 digits.';
+    const expiryMatch = expiry.match(/^(0[1-9]|1[0-2])\/(\d{2}|\d{4})$/);
+    if (!expiryMatch) return 'Expiry date must be in MM/YY format.';
+    const month = Number(expiryMatch[1]);
+    let year = Number(expiryMatch[2]);
+    if (year < 100) year += 2000;
+    const now = new Date();
+    const cardExpiry = new Date(year, month - 1, 1);
+    if (cardExpiry < new Date(now.getFullYear(), now.getMonth(), 1)) {
+      return 'Card expiry must be in the future.';
+    }
+    if (!/^\d{3,4}$/.test(cvc)) return 'CVC must be 3 or 4 digits.';
+    return null;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,59 +62,39 @@ const PaymentForm = ({ clientSecret, onPaymentSuccess, bookingId }) => {
       return;
     }
 
-    if (!clientSecret) {
-      setError('Payment session not initialized. Please refresh and try again.');
+    if (!booking) {
+      setError('Booking details are missing. Please refresh and try again.');
       setLoading(false);
       return;
     }
 
-    // --- STRATEGY A: SANDBOX TESTING ENVIRONMENT PIPELINE ---
-    if (isDevelopmentMock) {
-      try {
-        const paymentId = clientSecret.substring(0, clientSecret.indexOf('_secret'));
-
-        const response = await api.post('/payments/confirm', {
-          bookingId,
-          paymentId
-        });
-
-        if (response.data.success) {
-          onPaymentSuccess();
-        } else {
-          setError(response.data.message || 'Payment confirmation failed');
-        }
-      } catch (err) {
-        console.error('Mock Checkout Route Error:', err);
-        setError(err.response?.data?.message || 'Payment processing failed. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    // --- STRATEGY B: GENUINE SECURE STRIPE GATEWAY ENGINE ---
-    if (!stripe || !elements) {
-      setError('Stripe Gateway Engine has not loaded properly. Please wait a moment.');
+    const validationError = validateCardFields();
+    if (validationError) {
+      setError(validationError);
       setLoading(false);
       return;
     }
+
+    const expiryMatch = expiry.match(/^(0[1-9]|1[0-2])\/(\d{2}|\d{4})$/);
+    let expiryMonth = Number(expiryMatch[1]);
+    let expiryYear = Number(expiryMatch[2]);
+    if (expiryYear < 100) expiryYear += 2000;
+    const cleanCardNumber = cardNumber.replace(/\D/g, '');
 
     try {
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement),
-          billing_details: { name: 'Hotel Guest' },
-        },
+      await api.post('/payments/process', {
+        bookingId,
+        pointsToRedeem: pointsToRedeem || 0,
+        cardHolderName: cardHolderName.trim(),
+        cardNumber: cleanCardNumber,
+        expiryMonth,
+        expiryYear,
+        cvc,
       });
-
-      if (result.error) {
-        setError(result.error.message);
-      } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-        onPaymentSuccess();
-      }
+      onPaymentSuccess();
     } catch (err) {
-      console.error('Stripe SDK engine failure:', err);
-      setError('An unexpected structural gateway error occurred.');
+      console.error('Payment processing error:', err);
+      setError(err.response?.data?.message || err.message || 'Payment failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -108,38 +102,100 @@ const PaymentForm = ({ clientSecret, onPaymentSuccess, bookingId }) => {
 
   return (
     <div className="card shadow-sm border-0 p-4 w-100 mx-auto" style={{ maxWidth: '500px' }}>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3 className="mb-0 fw-bold">Secure Checkout</h3>
-        {isDevelopmentMock && (
-          <span className="badge bg-warning text-dark fw-bold px-2 py-1 small">Local Sandbox</span>
-        )}
+      <div className="mb-4">
+        <h3 className="fw-bold mb-2">Secure Checkout</h3>
+        <p className="text-muted small mb-0">Enter card details below and redeem points in blocks of 10 for a 7% discount per block.</p>
       </div>
       
       {error && <ErrorMessage message={error} />}
       
       <form onSubmit={handleSubmit}>
         <div className="mb-4 p-3 border rounded bg-white">
+          <div className="mb-3">
+            <strong>Booking Amount:</strong> ₹{baseAmount.toFixed(2)}
+          </div>
+          <div className="mb-3">
+            <strong>Available Star Points:</strong> {availablePoints}
+          </div>
+          {redeemedPoints > 0 && (
+            <div className="mb-3 small text-muted">
+              Previously redeemed: {redeemedPoints} points
+            </div>
+          )}
+          <label className="form-label text-muted small fw-bold mb-2">Redeem Star Points</label>
+          <input
+            type="number"
+            min="0"
+            step="10"
+            max={availablePoints}
+            value={pointsToRedeem}
+            onChange={(e) => {
+              const value = Number(e.target.value) || 0;
+              const normalized = Math.max(0, Math.min(value, availablePoints));
+              setPointsToRedeem(normalized - (normalized % 10));
+            }}
+            className="form-control mb-2"
+          />
+          <div className="small text-muted">
+            Discount: {roundedDiscount}% | Final amount: ₹{discountedAmount.toFixed(2)}
+          </div>
+        </div>
+        <div className="mb-4 p-3 border rounded bg-white">
           <label className="form-label text-muted small fw-bold mb-2">Credit or Debit Card</label>
           
-          {isDevelopmentMock ? (
-            <div className="py-2 text-success small fw-medium d-flex align-items-center justify-content-center border border-dashed rounded bg-light" style={{ minHeight: '40px' }}>
-              <i className="bi bi-shield-fill-check me-2 fs-5"></i> 
-              Sandbox Gateway Connected Successfully
+          <div className="row g-3">
+            <div className="col-12">
+              <label className="form-label">Name on Card</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Cardholder Name"
+                value={cardHolderName}
+                onChange={(e) => setCardHolderName(e.target.value)}
+              />
             </div>
-          ) : (
-            // Inner component prevents breaking hook boundaries
-            <StripeCardInput />
-          )}
+            <div className="col-12">
+              <label className="form-label">Card Number</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="1234 5678 9012 3456"
+                value={cardNumber}
+                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+              />
+            </div>
+            <div className="col-6">
+              <label className="form-label">Expiry (MM/YY)</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="MM/YY"
+                value={expiry}
+                onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                maxLength={5}
+              />
+            </div>
+            <div className="col-6">
+              <label className="form-label">CVC</label>
+              <input
+                type="password"
+                className="form-control"
+                placeholder="123"
+                value={cvc}
+                onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              />
+            </div>
+          </div>
         </div>
         
         <CustomButton type="submit" loading={loading} className="w-100 btn-success btn-lg fw-bold">
-          <i className="bi bi-lock-fill me-2"></i> {isDevelopmentMock ? 'Authorize Sandbox Pay' : 'Pay Now Safely'}
+          <i className="bi bi-lock-fill me-2"></i> Pay Now Safely
         </CustomButton>
       </form>
       
       <p className="text-center text-muted small mt-3 mb-0">
         <i className="bi bi-shield-check text-success me-1"></i> 
-        {isDevelopmentMock ? 'Running under mock validation conditions.' : 'Your data is secured by industry standard encryption.'}
+        Your card details are collected for this booking only and are not stored in full.
       </p>
     </div>
   );
